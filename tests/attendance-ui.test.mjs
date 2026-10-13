@@ -57,6 +57,6 @@ test('responsive rules cover desktop, tablet, mobile and narrow screens', () => 
 });
 
 test('live-feed polling is guarded and stopped when the Admin Panel toggle is used', () => {
-  assert.match(script, /setInterval\(\(\)=>\{if\(feedViewActive&&endpoint&&\$\(\'adminPin\'\)\.value\.trim\(\)&&!busy\)searchRecords\(false\)\},5000\)/);
-  assert.match(script, /adminPanelToggle\.addEventListener\('click',\(\)=>\{feedViewActive=false/);
+  assert.ok(script.includes("setInterval(()=>{if(feedViewActive&&endpoint&&$('adminPin').value.trim()&&!busy)searchRecords(false)},5000)"));
+  assert.ok(script.includes("$('adminPanelToggle').addEventListener('click',()=>{feedViewActive=false"));
 });
