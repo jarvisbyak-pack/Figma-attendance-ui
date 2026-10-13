@@ -7,10 +7,11 @@ Responsive attendance terminal with a shared Google Sheets backend and an Admin 
 - Variable-length numeric Membership ID lookup and registered mobile lookup.
 - Clock-in blocked for inactive/expired members and duplicate active sessions.
 - Clock-out requires a matching active clock-in; failed clock-outs do not write a success record.
-- Attendance history in Google Sheets, filterable by date, month, time, name, membership ID and mobile.
+- Attendance history in Google Sheets, filterable by date, month, time, name, membership ID and mobile, with membership expiry shown in the results.
 - Member profile attendance history.
+- A member directory with search by name, membership ID and mobile, plus membership status and expiry details; access is protected by the configured admin PIN.
 - Admin Panel contains attendance search and member attendance history, protected by the configured admin PIN.
-- The separate Member Management interface is intentionally removed from the frontend to keep the kiosk focused.
+- Live Feed polling is active only while the Live Feed view is selected.
 - Responsive dark charcoal/orange terminal.
 - Header connection-status button opens the Google Apps Script URL settings.
 
@@ -42,7 +43,7 @@ Responsive attendance terminal with a shared Google Sheets backend and an Admin 
 
 ## GitHub Pages
 
-The `.github/workflows/static.yml` workflow deploys the static frontend from `main`. Confirm the repository's **Settings → Pages → Build and deployment → Source** is set to **GitHub Actions**. The Google Apps Script backend is deployed separately and is not hosted by GitHub Pages.
+The `.github/workflows/static.yml` workflow runs the built-in Node.js regression tests before deploying the static frontend from `main`. Tests validate JavaScript syntax, unique/mapped HTML IDs, sidebar views, expiry UI, member-directory wiring, responsive breakpoints and Live Feed polling guards. Confirm the repository's **Settings → Pages → Build and deployment → Source** is set to **GitHub Actions**. The Google Apps Script backend is deployed separately and is not hosted by GitHub Pages.
 
 ## Security limitations
 
