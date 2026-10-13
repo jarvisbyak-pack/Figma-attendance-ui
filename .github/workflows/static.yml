@@ -25,6 +25,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Run UI regression tests
+        run: node --test tests/*.test.mjs
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
