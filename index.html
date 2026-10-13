@@ -212,9 +212,10 @@ async function loadProfile(id,name){
 
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
  const view=button.dataset.view;
- document.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-current',item===button?'page':'false'));
+ document.querySelectorAll('[data-view]').forEach(item=>{if(item===button)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});
  if(view==='members'){
   $('adminPanel').classList.add('hidden');
+  $('adminPanelToggle').setAttribute('aria-expanded','false');
   $('identity').focus({preventScroll:true});
   window.scrollTo({top:0,behavior:'smooth'});
  }else if(view==='admin'){
@@ -235,7 +236,7 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  }
 }));
 
-$('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'})});
+$('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===(opening?'admin':'members'))item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'})});
 $('connection').addEventListener('click',()=>{const d=$('connectionSettings');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});$('endpoint').focus()});
 $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
 $('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('terminalMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('terminalMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
