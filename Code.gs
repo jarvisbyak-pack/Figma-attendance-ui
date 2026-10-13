@@ -14,7 +14,7 @@ const MEMBER_HEADERS = ['Membership ID', 'Name', 'Mobile', 'Status', 'Expiry'];
 const ATTENDANCE_HEADERS = ['Membership ID', 'Name', 'Mobile', 'Date', 'Clock In', 'Clock Out', 'Duration', 'Status', 'Updated At'];
 
 function doGet() {
-  return json_({ok:true,service:'AK PACK FITNESS Attendance API',version:2,actions:[
+  return json_({ok:true,service:'AK PACK FITNESS Attendance API',version:3,actions:['schema',
     'ping','lookup','clockIn','clockOut','attendanceSearch','memberHistory',
     'memberList','memberCreate','memberUpdate','memberArchive'
   ]});
@@ -25,6 +25,7 @@ function doPost(e) {
     let out;
     switch (String(p.action || '')) {
       case 'ping': out = ping_(); break;
+      case 'schema': out = schema_(); break;
       case 'lookup': out = lookupMember_(p.identity); break;
       case 'clockIn': out = clockIn_(p.membershipId); break;
       case 'clockOut': out = clockOut_(p.membershipId); break;
@@ -45,10 +46,11 @@ function json_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)
 function safeMessage_(e) { const s=e&&e.message?e.message:String(e||'Unexpected server error'); return s.length>260?s.slice(0,260):s; }
 function props_(){return PropertiesService.getScriptProperties();}
 function spreadsheet_(){const id=props_().getProperty('SPREADSHEET_ID');if(!id)throw new Error('Set SPREADSHEET_ID in Apps Script Project Settings.');return SpreadsheetApp.openById(id);}
-function ensureSheet_(name,headers){const ss=spreadsheet_();let sh=ss.getSheetByName(name);if(!sh)sh=ss.insertSheet(name);if(sh.getLastRow()===0)sh.getRange(1,1,1,headers.length).setValues([headers]);return sh;}
+function ensureSheet_(name,headers){const ss=spreadsheet_();let sh=ss.getSheets().find(s=>s.getName().trim().toLowerCase()===name.toLowerCase());if(!sh)sh=ss.insertSheet(name);if(sh.getLastRow()===0)sh.getRange(1,1,1,headers.length).setValues([headers]);return sh;}
 function membersSheet_(){return ensureSheet_(MEMBERS_SHEET,MEMBER_HEADERS);}
 function attendanceSheet_(){return ensureSheet_(ATTENDANCE_SHEET,ATTENDANCE_HEADERS);}
-function ping_(){const ss=spreadsheet_();return {ok:true,message:'Google Sheets connection successful.',spreadsheet: ss.getName(),spreadsheetConfigured:true,actions:['lookup','clockIn','clockOut','attendanceSearch','memberHistory','memberList','memberCreate','memberUpdate','memberArchive']};}
+function ping_(){const s=schema_();return {ok:true,message:'Google Sheets connection successful.',spreadsheet:s.spreadsheet,sheet:s.memberSheet,columns:s.columns,spreadsheetConfigured:true,actions:s.actions};}
+function schema_(){const ss=spreadsheet_(),sh=membersSheet_(),lastCol=Math.max(1,sh.getLastColumn()),headers=sh.getRange(1,1,1,lastCol).getDisplayValues()[0].map(v=>String(v).trim()).filter(Boolean);const hm=headerMap_(sh);const aliases={membershipId:['membership id','membershipid','member id','id','membership no','membership number','member no','client id'],name:['name','member name','client name','full name','customer name'],mobile:['mobile','mobile number','phone','phone number','registered mobile','contact number','whatsapp number'],status:['status','membership status','member status'],expiry:['expiry','expiry date','membership expiry','valid till','valid until','end date']};const mapped={};Object.keys(aliases).forEach(k=>{const i=hm.col(aliases[k]);mapped[k]=i<0?null:headers[i]||hm.headers[i]});return {ok:true,service:'AK PACK FITNESS Attendance API',version:3,spreadsheet:ss.getName(),memberSheet:sh.getName(),columns:headers,mappedColumns:mapped,memberRows:Math.max(0,sh.getLastRow()-1),attendanceSheet:attendanceSheet_().getName(),actions:['lookup','clockIn','clockOut','attendanceSearch','memberHistory','memberList','memberCreate','memberUpdate','memberArchive']};}
 function digits_(v){return String(v==null?'':v).replace(/\\D/g,'');}
 function mobileKey_(v){let s=digits_(v);if(s.length>10)s=s.slice(-10);return s;}
 function tz_(){return Session.getScriptTimeZone()||'Asia/Kolkata';}
@@ -58,7 +60,7 @@ function dateTime_(d,t){const ds=dateText_(d),ts=timeText_(t);if(!ds||!ts)return
 function headerMap_(sh){const hs=sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0].map(v=>String(v).trim().toLowerCase());return {headers:hs,col:function(aliases){return hs.findIndex(h=>aliases.indexOf(h)>=0);}};}
 function readMembers_(){
  const sh=membersSheet_(),values=sh.getDataRange().getValues();if(values.length<2)return [];
- const hm=headerMap_(sh),id=hm.col(['membership id','membershipid','member id','id']),name=hm.col(['name','member name','client name']),mobile=hm.col(['mobile','mobile number','phone','phone number','registered mobile']),status=hm.col(['status','membership status']),expiry=hm.col(['expiry','expiry date','membership expiry']);
+ const hm=headerMap_(sh),id=hm.col(['membership id','membershipid','member id','id','membership no','membership number','member no','client id']),name=hm.col(['name','member name','client name','full name','customer name']),mobile=hm.col(['mobile','mobile number','phone','phone number','registered mobile','contact number','whatsapp number']),status=hm.col(['status','membership status','member status']),expiry=hm.col(['expiry','expiry date','membership expiry','valid till','valid until','end date']);
  if(id<0||name<0)throw new Error('MEMBERS sheet must contain Membership ID and Name columns.');
  return values.slice(1).map((r,i)=>({rowNumber:i+2,membershipId:digits_(r[id]),name:String(r[name]||'').trim(),mobile:mobile<0?'':digits_(r[mobile]),status:status<0||!String(r[status]).trim()?'active':String(r[status]).trim(),expiry:expiry<0?'':dateText_(r[expiry])})).filter(m=>m.membershipId);
 }
@@ -76,7 +78,7 @@ function memberHistory_(id){const m=findMember_(id),records=attendanceRows_().fi
 function listMembers_(query){const q=String(query||'').trim().toLowerCase(),qd=digits_(q),qm=mobileKey_(q);return readMembers_().filter(m=>!q||m.name.toLowerCase().indexOf(q)>=0||(qd&&m.membershipId.indexOf(qd)>=0)||(qm.length>=4&&mobileKey_(m.mobile).indexOf(qm)>=0)).sort((a,b)=>Number(a.membershipId)-Number(b.membershipId)).map(publicMember_);}
 function nextMembershipId_(){const ids=readMembers_().map(m=>Number(m.membershipId)).filter(n=>Number.isSafeInteger(n)&&n>0);return String(Math.max(0,...ids)+1);}
 function writeMember_(rowNumber,member){
- const sh=membersSheet_(),hm=headerMap_(sh),id=hm.col(['membership id','membershipid','member id','id']),name=hm.col(['name','member name','client name']),mobile=hm.col(['mobile','mobile number','phone','phone number','registered mobile']),status=hm.col(['status','membership status']),expiry=hm.col(['expiry','expiry date','membership expiry']);
+ const sh=membersSheet_(),hm=headerMap_(sh),id=hm.col(['membership id','membershipid','member id','id','membership no','membership number','member no','client id']),name=hm.col(['name','member name','client name','full name','customer name']),mobile=hm.col(['mobile','mobile number','phone','phone number','registered mobile','contact number','whatsapp number']),status=hm.col(['status','membership status','member status']),expiry=hm.col(['expiry','expiry date','membership expiry','valid till','valid until','end date']);
  if(id<0||name<0)throw new Error('MEMBERS sheet must contain Membership ID and Name columns.');
  if(rowNumber===null){const row=new Array(sh.getLastColumn()).fill('');row[id]=member.membershipId;row[name]=member.name;if(mobile>=0)row[mobile]=member.mobile;if(status>=0)row[status]=member.status;if(expiry>=0)row[expiry]=member.expiry?new Date(member.expiry+'T12:00:00'):'';sh.appendRow(row);}
  else {sh.getRange(rowNumber,id+1).setNumberFormat('@').setValue(member.membershipId);sh.getRange(rowNumber,name+1).setValue(member.name);if(mobile>=0)sh.getRange(rowNumber,mobile+1).setNumberFormat('@').setValue(member.mobile);if(status>=0)sh.getRange(rowNumber,status+1).setValue(member.status);if(expiry>=0)sh.getRange(rowNumber,expiry+1).setValue(member.expiry?new Date(member.expiry+'T12:00:00'):'');}
