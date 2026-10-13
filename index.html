@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AK PACK FITNESS - Attendance Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f0f;
+            --bg-card: #1a1a1a;
+            --accent-orange: #ff6600;
+            --text-white: #f5f5f5;
+            --text-dim: #a0a0a0;
+            --sidebar-width: 260px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Geometric Cube Motif */
+        .cube-bg {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, transparent 48%, var(--accent-orange) 50%, transparent 52%);
+            background-size: 40px 40px;
+            opacity: 0.05;
+            z-index: -1;
+        }
+
+        /* Sidebar */
+        aside {
+            width: var(--sidebar-width);
+            background-color: var(--bg-card);
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 0;
+            transition: transform 0.3s ease;
+        }
+
+        .logo {
+            padding: 0 2rem 2rem;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            color: var(--accent-orange);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-cube {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--accent-orange);
+            transform: rotate(45deg);
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav li {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        nav li:hover, nav li.active {
+            color: var(--text-white);
+            background: linear-gradient(90deg, rgba(255, 102, 0, 0.1) 0%, transparent 100%);
+            border-left: 4px solid var(--accent-orange);
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #4caf50;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background-color: #4caf50;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        /* Dashboard View */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .keypad-container {
+            text-align: center;
+        }
+
+        .keypad-display {
+            background: #000;
+            border: 1px solid #333;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-size: 2rem;
+            letter-spacing: 8px;
+            margin-bottom: 2rem;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-orange);
+        }
+
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .key {
+            background: #252525;
+            border: none;
+            color: white;
+            padding: 1.5rem;
+            font-size: 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .key:hover {
+            background: #333;
+        }
+
+        .key.action {
+            background: var(--accent-orange);
+            grid-column: span 3;
+            margin-top: 1rem;
+        }
+
+        .key.clear {
+            background: #444;
+        }
+
+        /* Activity Log */
+        .log-list {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-item:last-child { border: none; }
+
+        .time { color: var(--text-dim); }
+        .type-in { color: #4caf50; }
+        .type-out { color: #f44336; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 992px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            aside { transform: translateX(-100%); position: fixed; z-index: 100; height: 100%; }
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="cube-bg"></div>
+
+    <aside id="sidebar">
+        <div class="logo">
+            <div class="logo-cube"></div>
+            AK PACK
+        </div>
+        <nav>
+            <ul>
+                <li class="active" onclick="showView('home')">Home Dashboard</li>
+                <li onclick="showView('entry')">Member Entry</li>
+                <li onclick="showView('exit')">Member Exit</li>
+                <li>Statistics</li>
+                <li>Settings</li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <header>
+            <div>
+                <h1 id="view-title">Dashboard</h1>
+                <p style="color: var(--text-dim)" id="current-date"></p>
+            </div>
+            <div class="status-indicator">
+                <div class="pulse"></div>
+                System Live
+            </div>
+        </header>
+
+        <!-- Home View -->
+        <div id="view-home" class="view-section active">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2>Quick Access</h2>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button class="key action" style="margin: 0;" onclick="showView('entry')">Clock In</button>
+                        <button class="key action" style="margin: 0; background: #333;" onclick="showView('exit')">Clock Out</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Today's Activity</h2>
+                    <ul class="log-list" id="activity-log">
+                        <li class="log-item">
+                            <span>John Doe (ID: 5542)</span>
+                            <div><span class="type-in">IN</span> <span class="time">08:15 AM</span></div>
+                        </li>
+                        <li class="log-item">
+                            <span>Sarah Smith (ID: 1029)</span>
+                            <div><span class="type-in">IN</span> <span class="time">09:30 AM</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry/Exit Keypad View -->
+        <div id="view-keypad" class="view-section">
+            <div class="card keypad-container">
+                <h2 id="keypad-title">Enter Membership ID</h2>
+                <div class="keypad-display" id="display">----</div>
+                <div class="keypad-grid">
+                    <button class="key" onclick="press(1)">1</button>
+                    <button class="key" onclick="press(2)">2</button>
+                    <button class="key" onclick="press(3)">3</button>
+                    <button class="key" onclick="press(4)">4</button>
+                    <button class="key" onclick="press(5)">5</button>
+                    <button class="key" onclick="press(6)">6</button>
+                    <button class="key" onclick="press(7)">7</button>
+                    <button class="key" onclick="press(8)">8</button>
+                    <button class="key" onclick="press(9)">9</button>
+                    <button class="key clear" onclick="clearDisplay()">C</button>
+                    <button class="key" onclick="press(0)">0</button>
+                    <button class="key clear" onclick="backspace()">←</button>
+                    <button class="key action" onclick="submitID()">CONFIRM</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentInput = "";
+        let mode = "entry";
+
+        function updateDate() {
+            const now = new Date();
+            document.getElementById('current-date').innerText = now.toDateString();
+        }
+        updateDate();
+
+        function showView(view) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('nav li').forEach(l => l.classList.remove('active'));
+
+            if (view === 'home') {
+                document.getElementById('view-home').classList.add('active');
+                document.getElementById('view-title').innerText = "Dashboard";
+            } else {
+                mode = view;
+                document.getElementById('view-keypad').classList.add('active');
+                document.getElementById('view-title').innerText = view === 'entry' ? "Member Entry" : "Member Exit";
+                document.getElementById('keypad-title').innerText = view === 'entry' ? "Scan or Enter Entry ID" : "Scan or Enter Exit ID";
+                clearDisplay();
+            }
+        }
+
+        function press(num) {
+            if (currentInput.length < 4) {
+                currentInput += num;
+                updateDisplay();
+            }
+        }
+
+        function clearDisplay() {
+            currentInput = "";
+            updateDisplay();
+        }
+
+        function backspace() {
+            currentInput = currentInput.slice(0, -1);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const display = document.getElementById('display');
+            display.innerText = currentInput.padEnd(4, '-');
+        }
+
+        function submitID() {
+            if (currentInput.length === 4) {
+                const log = document.getElementById('activity-log');
+                const li = document.createElement('li');
+                li.className = 'log-item';
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                li.innerHTML = `
+                    <span>Member ID: ${currentInput}</span>
+                    <div><span class="type-${mode === 'entry' ? 'in' : 'out'}">${mode.toUpperCase()}</span> <span class="time">${time}</span></div>
+                `;
+                log.prepend(li);
+                alert(`${mode === 'entry' ? 'Welcome!' : 'Goodbye!'} ID ${currentInput} confirmed.`);
+                showView('home');
+            } else {
+                alert("Please enter a 4-digit ID");
+            }
+        }
+    </script>
+</body>
+</html>
