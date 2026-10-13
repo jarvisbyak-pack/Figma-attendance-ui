@@ -1,6 +1,6 @@
 # AK PACK FITNESS Attendance
 
-Responsive attendance terminal and dynamic Google Sheets-backed member management.
+Responsive attendance terminal with a shared Google Sheets backend and an Admin Panel for attendance records and member history.
 
 ## Features
 
@@ -9,8 +9,8 @@ Responsive attendance terminal and dynamic Google Sheets-backed member managemen
 - Clock-out requires a matching active clock-in; failed clock-outs do not write a success record.
 - Attendance history in Google Sheets, filterable by date, month, time, name, membership ID and mobile.
 - Member profile attendance history.
-- Admin-PIN-protected member directory: fetch/pull, create, edit, and archive.
-- New member IDs are assigned as max existing numeric ID + 1; existing IDs are preserved on edit and archive.
+- Admin Panel contains attendance search and member attendance history, protected by the configured admin PIN.
+- The separate Member Management interface is intentionally removed from the frontend to keep the kiosk focused.
 - Responsive dark charcoal/orange terminal.
 - Header connection-status button opens the Google Apps Script URL settings.
 
@@ -31,8 +31,8 @@ Responsive attendance terminal and dynamic Google Sheets-backed member managemen
    - `ADMIN_PIN`: a strong PIN used to authorize member management and attendance history
 4. In the editor, run `setupAttendanceSheets` once and approve the requested Google authorization. This creates missing sheet tabs and headers; it does not import or replace your existing member rows.
 5. Select **Deploy → New deployment → Web app**. Choose **Execute as: Me** and set access to a level compatible with your kiosk/browser usage. Deploy and copy the URL ending in `/exec`.
-6. Open the published attendance app. Click the top-right backend status button, paste the Apps Script URL, and choose **Save & test connection**. The app fetches the actual spreadsheet name, member-tab name, column headers, row count, and field mappings from the backend. The status changes to Google Sheets connected only after a successful ping.
-7. Enter your admin PIN in the Attendance filters panel. Use **Pull members from Sheets** to fetch the directory. You can create members, edit fields, and archive members without deleting their attendance history or changing their IDs.
+6. Open the published attendance app. Click the top-right backend status button, paste the Apps Script URL, and choose **Save & test connection**. The app tests the URL through a GET ping (with a POST fallback), then fetches the actual spreadsheet name, member-tab name, column headers, row count, and field mappings. The status changes to Google Sheets connected only after a successful ping. The URL is saved in that browser on that device; configure the same URL once on each new device. Member records and attendance are shared centrally through the same spreadsheet, but the static GitHub Pages app cannot automatically synchronize a URL setting between devices without an additional central configuration service.
+7. Open **Admin Panel**, enter your admin PIN, and use the records filters to search attendance. Click a record to load that member's attendance history.
 8. Test with a test member: clock in and verify a new row in `ATTENDANCE`; clock out and verify the same row is updated. Then test clock-out without an active clock-in and confirm it is rejected.
 
 ## API actions
