@@ -127,7 +127,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 </section>
 <div class="right-stack">
 <section class="panel hidden" id="adminPanel" aria-label="Admin Panel">
-<div class="section-head"><div><div class="eyebrow">Admin Panel · Attendance</div><h2>Records & member history</h2><p class="sub" style="margin-bottom:0">Search by date, month, time, name, ID or mobile.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div>
+<div class="section-head"><div><div class="eyebrow">Live Feed · Attendance</div><h2>Client check-ins & check-outs</h2><p class="sub" style="margin-bottom:0">Latest attendance events with membership expiry status.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div><div id="feedState" class="small" style="margin-top:10px">Auto-refresh waits for backend connection and admin PIN.</div><div id="liveFeedList" style="display:grid;gap:8px;margin-top:12px"></div>
 <div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div>
 <div class="filters">
 <input id="filterDate" class="input" type="date" aria-label="Filter by date">
@@ -193,12 +193,16 @@ async function attendance(action){
  finally{setBusy(false)}
 }
 function rowCell(text){const td=document.createElement('td');td.textContent=text==null?'':String(text);return td}
-function renderRecords(rows){const body=$('recordsBody');body.replaceChildren();if(!rows||!rows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else rows.forEach(r=>{const tr=document.createElement('tr');tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status));tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=(rows||[]).length;$('activeCount').textContent=(rows||[]).filter(r=>!r.clockOut).length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
+function expiryInfo(r){const raw=r.expiryDate||r.expiry||r.membershipExpiry||r.expiry_date||r["Expiry Date"]||"";if(!raw)return {label:"Expiry not provided",kind:"unknown",date:"—"};const d=new Date(raw);if(Number.isNaN(d.getTime()))return {label:"Expiry date unavailable",kind:"unknown",date:String(raw)};d.setHours(0,0,0,0);const today=new Date();today.setHours(0,0,0,0);const days=Math.ceil((d-today)/86400000);if(days<=0)return {label:days===0?"Expires today":"Expired "+Math.abs(days)+"d ago",kind:"expired",date:d.toLocaleDateString()};if(days<=5)return {label:days+"d left",kind:"soon",date:d.toLocaleDateString()};return {label:days+"d left",kind:"active",date:d.toLocaleDateString()}}
+function renderLiveFeed(rows){const host=$('liveFeedList');host.replaceChildren();const events=[];(rows||[]).forEach(r=>{const expiry=expiryInfo(r);if(r.clockIn&&String(r.clockIn).trim()!=="—")events.push({r,expiry,type:"Check In",time:r.clockIn});if(r.clockOut&&String(r.clockOut).trim()!=="—")events.push({r,expiry,type:"Check Out",time:r.clockOut})});events.sort((a,b)=>String(b.r.date+" "+b.time).localeCompare(String(a.r.date+" "+a.time)));if(!events.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='No check-in or check-out events returned yet.';host.appendChild(empty);return}events.slice(0,60).forEach(e=>{const card=document.createElement('article');card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:13px;border:1px solid #2b3035;border-radius:12px;background:#111315';const main=document.createElement('div');main.style.cssText='min-width:0';const name=document.createElement('div');name.style.cssText='font-weight:800;font-size:13px';name.textContent=e.r.name||'Member';const meta=document.createElement('div');meta.style.cssText='color:#9ba1a8;font-size:11px;margin-top:4px';meta.textContent='ID '+(e.r.membershipId||'—')+' · '+(e.r.date||'')+' '+e.time;const expiry=document.createElement('div');expiry.style.cssText='color:#b9bec4;font-size:11px;margin-top:5px';expiry.textContent='Expiry: '+e.expiry.date+' · '+e.expiry.label;main.append(name,meta,expiry);const badges=document.createElement('div');badges.style.cssText='display:grid;justify-items:end;gap:6px';const event=document.createElement('span');event.style.cssText='font-size:10px;font-weight:800;padding:5px 8px;border-radius:99px;background:'+(e.type==='Check In'?'#183b2a':'#202b3a')+';color:'+(e.type==='Check In'?'#69e3a0':'#9cc8ff');event.textContent=e.type;const status=document.createElement('span');const colors={expired:['#45191c','#ff747b'],soon:['#492d0b','#ffb02e'],active:['#123d2a','#38d98a'],unknown:['#292d32','#b9bec4']};const palette=colors[e.expiry.kind];status.style.cssText='font-size:10px;font-weight:800;padding:5px 8px;border-radius:99px;background:'+palette[0]+';color:'+palette[1];status.textContent=e.expiry.kind==='expired'?'EXPIRED':e.expiry.kind==='soon'?'EXPIRING SOON':e.expiry.kind==='active'?'ACTIVE':'NO EXPIRY DATA';badges.append(event,status);card.append(main,badges);host.appendChild(card)})}
+function renderRecords(rows){renderLiveFeed(rows);const body=$('recordsBody');body.replaceChildren();if(!rows||!rows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else rows.forEach(r=>{const tr=document.createElement('tr');tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status));tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=(rows||[]).length;$('activeCount').textContent=(rows||[]).filter(r=>!r.clockOut).length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
+let feedViewActive=false;
 async function searchRecords(showErrors){
  if(!endpoint){if(showErrors)setMessage('recordsMessage','Configure the Google Apps Script URL first.',false);return}
+ if(feedViewActive&&!$('adminPin').value.trim()){$('feedState').textContent='Enter the admin PIN to load the live feed.';return}
  if(busy&&showErrors)return;const data={adminPin:$('adminPin').value,date:$('filterDate').value,month:$('filterMonth').value,time:$('filterTime').value,name:$('filterName').value.trim(),identity:digits($('filterIdentity').value)};
  if(showErrors)setBusy(true);hideMessage('recordsMessage');
- try{const r=await api('attendanceSearch',data);renderRecords(r.records||[]);if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
+ try{const r=await api('attendanceSearch',data);renderRecords(r.records||[]);$('feedState').textContent='Live feed updated at '+new Date().toLocaleTimeString()+' · refreshes every 5 seconds while Live Feed is selected.';if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
  catch(e){if(showErrors)setMessage('recordsMessage',e.message,false);else console.warn(e)}
  finally{if(showErrors)setBusy(false)}
 }
@@ -214,20 +218,24 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  const view=button.dataset.view;
  document.querySelectorAll('[data-view]').forEach(item=>{if(item===button)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});
  if(view==='members'){
+  feedViewActive=false;
   $('adminPanel').classList.add('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','false');
   $('identity').focus({preventScroll:true});
   window.scrollTo({top:0,behavior:'smooth'});
  }else if(view==='admin'){
+  feedViewActive=false;
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
   $('adminPanel').scrollIntoView({behavior:'smooth',block:'start'});
  }else if(view==='filter'){
+  feedViewActive=false;
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
   $('filterDate').scrollIntoView({behavior:'smooth',block:'center'});
   $('filterDate').focus({preventScroll:true});
  }else if(view==='feed'){
+  feedViewActive=true;
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
   $('recordsBody').scrollIntoView({behavior:'smooth',block:'center'});
@@ -242,6 +250,7 @@ $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('
 $('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('terminalMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('terminalMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
 $('searchBtn').addEventListener('click',()=>searchRecords(true));$('refreshBtn').addEventListener('click',()=>searchRecords(true));$('clearFilters').addEventListener('click',()=>{['filterDate','filterMonth','filterTime','filterName','filterIdentity'].forEach(id=>$(id).value='');searchRecords(true)});
 if(endpoint)testConnection().catch(e=>{setConnection(false,'URL saved · not connected');console.warn('Apps Script connection test failed:',e)});else setConnection(false,'Backend not configured');
+setInterval(()=>{if(feedViewActive&&endpoint&&$('adminPin').value.trim()&&!busy)searchRecords(false)},5000);
 })();
 </script>
 </body>
