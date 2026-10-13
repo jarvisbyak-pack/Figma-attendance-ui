@@ -19,7 +19,7 @@ Responsive attendance terminal and dynamic Google Sheets-backed member managemen
 1. Create or choose a Google Spreadsheet and copy its ID from the URL.
 2. Create a tab named `MEMBERS` with row-1 headers:
    `Membership ID | Name | Mobile | Status | Expiry`
-3. Import the real member data under those headers. Keep Membership IDs unchanged. Use `active` for active members; use `inactive`, `expired`, `suspended`, or `archived` to block clock-in. Expiry is optional; when present as a valid date, expiry dates before today block clock-in.
+3. Your existing tab can be named `members` in lowercase; the script locates the tab case-insensitively and does not rename it. It reads the header row dynamically and maps common column names such as Membership ID / Member ID, Name / Client Name, Mobile / Phone Number, Status, and Expiry / Valid Till. No fixed column order is required. After connecting, the app displays the detected column names and which fields were mapped. Membership ID and Name (or supported equivalents) are required for member lookup and edits. Use `active` for active members; use `inactive`, `expired`, `suspended`, or `archived` to block clock-in. Expiry is optional; when present as a valid date, expiry dates before today block clock-in.
 4. Set the spreadsheet and Apps Script project time zone to `Asia/Kolkata` for India.
 
 ## Deploy the Apps Script backend
@@ -31,7 +31,7 @@ Responsive attendance terminal and dynamic Google Sheets-backed member managemen
    - `ADMIN_PIN`: a strong PIN used to authorize member management and attendance history
 4. In the editor, run `setupAttendanceSheets` once and approve the requested Google authorization. This creates missing sheet tabs and headers; it does not import or replace your existing member rows.
 5. Select **Deploy → New deployment → Web app**. Choose **Execute as: Me** and set access to a level compatible with your kiosk/browser usage. Deploy and copy the URL ending in `/exec`.
-6. Open the published attendance app. Click the top-right **Backend not configured / Configure** button, paste the Apps Script URL, and choose **Save & test connection**. The status should change to Google Sheets connected after a successful ping.
+6. Open the published attendance app. Click the top-right backend status button, paste the Apps Script URL, and choose **Save & test connection**. The app fetches the actual spreadsheet name, member-tab name, column headers, row count, and field mappings from the backend. The status changes to Google Sheets connected only after a successful ping.
 7. Enter your admin PIN in the Attendance filters panel. Use **Pull members from Sheets** to fetch the directory. You can create members, edit fields, and archive members without deleting their attendance history or changing their IDs.
 8. Test with a test member: clock in and verify a new row in `ATTENDANCE`; clock out and verify the same row is updated. Then test clock-out without an active clock-in and confirm it is rejected.
 
