@@ -1,381 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AK PACK FITNESS - Attendance Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #0f0f0f;
-            --bg-card: #1a1a1a;
-            --accent-orange: #ff6600;
-            --text-white: #f5f5f5;
-            --text-dim: #a0a0a0;
-            --sidebar-width: 260px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-white);
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Geometric Cube Motif */
-        .cube-bg {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 300px;
-            height: 300px;
-            background: linear-gradient(45deg, transparent 48%, var(--accent-orange) 50%, transparent 52%);
-            background-size: 40px 40px;
-            opacity: 0.05;
-            z-index: -1;
-        }
-
-        /* Sidebar */
-        aside {
-            width: var(--sidebar-width);
-            background-color: var(--bg-card);
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem 0;
-            transition: transform 0.3s ease;
-        }
-
-        .logo {
-            padding: 0 2rem 2rem;
-            font-weight: 700;
-            font-size: 1.5rem;
-            letter-spacing: 1px;
-            color: var(--accent-orange);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-cube {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--accent-orange);
-            transform: rotate(45deg);
-        }
-
-        nav ul {
-            list-style: none;
-        }
-
-        nav li {
-            padding: 1rem 2rem;
-            cursor: pointer;
-            color: var(--text-dim);
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        nav li:hover, nav li.active {
-            color: var(--text-white);
-            background: linear-gradient(90deg, rgba(255, 102, 0, 0.1) 0%, transparent 100%);
-            border-left: 4px solid var(--accent-orange);
-        }
-
-        /* Main Content */
-        main {
-            flex-grow: 1;
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: #4caf50;
-        }
-
-        .pulse {
-            width: 8px;
-            height: 8px;
-            background-color: #4caf50;
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-        }
-
-        /* Dashboard View */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .keypad-container {
-            text-align: center;
-        }
-
-        .keypad-display {
-            background: #000;
-            border: 1px solid #333;
-            padding: 1.5rem;
-            border-radius: 8px;
-            font-size: 2rem;
-            letter-spacing: 8px;
-            margin-bottom: 2rem;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent-orange);
-        }
-
-        .keypad-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-
-        .key {
-            background: #252525;
-            border: none;
-            color: white;
-            padding: 1.5rem;
-            font-size: 1.25rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .key:hover {
-            background: #333;
-        }
-
-        .key.action {
-            background: var(--accent-orange);
-            grid-column: span 3;
-            margin-top: 1rem;
-        }
-
-        .key.clear {
-            background: #444;
-        }
-
-        /* Activity Log */
-        .log-list {
-            list-style: none;
-            margin-top: 1.5rem;
-        }
-
-        .log-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 1rem 0;
-            border-bottom: 1px solid #333;
-        }
-
-        .log-item:last-child { border: none; }
-
-        .time { color: var(--text-dim); }
-        .type-in { color: #4caf50; }
-        .type-out { color: #f44336; }
-
-        /* Mobile Adjustments */
-        @media (max-width: 992px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            aside { transform: translateX(-100%); position: fixed; z-index: 100; height: 100%; }
-        }
-
-        .view-section {
-            display: none;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111214">
+<title>AK PACK FITNESS | Attendance</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0c0e;--panel:#141619;--panel2:#1b1e22;--line:#2a2e33;--text:#f4f5f6;--muted:#9ba1a8;--orange:#ff6b24;--orange2:#ff8c45;--green:#50d890;--red:#ff626b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% -10%,#352014 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:22px 18px 48px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;display:grid;place-items:center;border:1px solid #ff7a35;border-radius:12px;background:linear-gradient(145deg,#302017,#151515);color:#ff8b45;font-weight:900;letter-spacing:-2px;font-size:18px}.brand h1{font-size:17px;letter-spacing:.12em;margin:0;font-weight:850}.brand p{font-size:11px;color:var(--muted);letter-spacing:.18em;margin:3px 0 0}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px}.dot{width:7px;height:7px;background:#8a8f95;border-radius:50%}.status.online .dot{background:var(--green);box-shadow:0 0 10px #50d89066}.layout{display:grid;grid-template-columns:minmax(300px,.88fr) minmax(0,1.35fr);gap:18px}.panel{background:linear-gradient(150deg,#191b1e,#111315);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 16px 45px #0002}.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--orange2);font-weight:800;text-transform:uppercase}.panel h2{font-size:22px;margin:6px 0 5px;letter-spacing:-.03em}.sub{color:var(--muted);font-size:13px;margin:0 0 20px}.clock{font-size:30px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.today{color:var(--muted);font-size:12px;margin-top:1px}.field-label{display:block;color:#c4c8cc;font-size:12px;font-weight:700;margin:18px 0 8px}.input-wrap{display:flex;gap:8px}.input{width:100%;min-width:0;background:#0b0c0e;border:1px solid #343940;border-radius:10px;color:var(--text);padding:13px 14px;outline:none}.input:focus{border-color:var(--orange);box-shadow:0 0 0 3px #ff6b241a}.btn{border:1px solid transparent;border-radius:10px;padding:12px 14px;font-weight:800;transition:transform .15s,opacity .15s}.btn:active{transform:scale(.98)}.btn-primary{background:linear-gradient(135deg,var(--orange),#f04f14);color:#17100c}.btn-secondary{background:#22262b;border-color:#373c42;color:#f2f3f4}.btn-quiet{background:transparent;border-color:#343940;color:#d4d7da}.btn:disabled{opacity:.45;cursor:not-allowed}.input-wrap .btn{white-space:nowrap}.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.key{padding:12px 8px;background:#1b1e22;border:1px solid #30353a;border-radius:9px;color:#e9eaec;font-weight:700}.key:active{background:#343940}.member-card{margin-top:15px;padding:14px;background:#101214;border:1px solid #30343a;border-radius:12px;display:none}.member-name{font-weight:800;font-size:17px}.member-meta{font-size:12px;color:var(--muted);margin-top:3px}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:99px;font-size:11px;font-weight:800;margin-top:9px}.pill.active{background:#133324;color:#70e5a8}.pill.inactive{background:#3b2022;color:#ff8a91}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.actions .btn{padding:15px 10px}.message{display:none;margin-top:12px;border-radius:10px;padding:11px 12px;font-size:13px}.message.show{display:block}.message.ok{background:#102a1e;color:#85efb5;border:1px solid #1d5638}.message.err{background:#321719;color:#ff9ca1;border:1px solid #713034}.right-stack{display:flex;flex-direction:column;gap:18px}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.section-head h2{font-size:19px}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.stat{padding:13px;border:1px solid #2b3035;background:#111315;border-radius:12px}.stat span{display:block;color:var(--muted);font-size:11px}.stat strong{display:block;font-size:23px;margin-top:5px;font-variant-numeric:tabular-nums}.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.filters .input{padding:10px;font-size:12px}.table-wrap{overflow:auto;margin-top:13px;border:1px solid #2b3035;border-radius:11px}table{border-collapse:collapse;width:100%;min-width:560px;font-size:12px}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid #282c31;white-space:nowrap}th{background:#1a1d20;color:#aeb4ba;font-size:10px;text-transform:uppercase;letter-spacing:.08em}td{color:#e2e4e6}tr:last-child td{border-bottom:0}.empty{text-align:center;color:var(--muted);padding:24px}.small{font-size:11px;color:var(--muted)}.profile{display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:15px}.profile h3{margin:0 0 8px;font-size:15px}.profile .table-wrap{margin-top:8px}.settings{margin-top:18px}.settings summary{cursor:pointer;color:#c5c9cd;font-size:12px;font-weight:700}.settings-content{display:grid;gap:9px;margin-top:12px}.settings-content .input{font-size:12px}.foot{display:flex;justify-content:space-between;gap:12px;color:#777e85;font-size:11px;margin-top:18px}.hidden{display:none!important}
+@media(max-width:800px){.shell{padding:15px 12px 30px}.layout{grid-template-columns:1fr}.panel{padding:17px}.topbar{align-items:flex-start}.brand h1{font-size:14px}.status{font-size:10px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.clock{font-size:26px}.actions{gap:7px}.actions .btn{font-size:12px}.stat-grid{gap:6px}.stat{padding:10px}.stat strong{font-size:20px}.brand p{font-size:9px}}
+</style>
 </head>
 <body>
-    <div class="cube-bg"></div>
-
-    <aside id="sidebar">
-        <div class="logo">
-            <div class="logo-cube"></div>
-            AK PACK
-        </div>
-        <nav>
-            <ul>
-                <li class="active" onclick="showView('home')">Home Dashboard</li>
-                <li onclick="showView('entry')">Member Entry</li>
-                <li onclick="showView('exit')">Member Exit</li>
-                <li>Statistics</li>
-                <li>Settings</li>
-            </ul>
-        </nav>
-    </aside>
-
-    <main>
-        <header>
-            <div>
-                <h1 id="view-title">Dashboard</h1>
-                <p style="color: var(--text-dim)" id="current-date"></p>
-            </div>
-            <div class="status-indicator">
-                <div class="pulse"></div>
-                System Live
-            </div>
-        </header>
-
-        <!-- Home View -->
-        <div id="view-home" class="view-section active">
-            <div class="dashboard-grid">
-                <div class="card">
-                    <h2>Quick Access</h2>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button class="key action" style="margin: 0;" onclick="showView('entry')">Clock In</button>
-                        <button class="key action" style="margin: 0; background: #333;" onclick="showView('exit')">Clock Out</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2>Today's Activity</h2>
-                    <ul class="log-list" id="activity-log">
-                        <li class="log-item">
-                            <span>John Doe (ID: 5542)</span>
-                            <div><span class="type-in">IN</span> <span class="time">08:15 AM</span></div>
-                        </li>
-                        <li class="log-item">
-                            <span>Sarah Smith (ID: 1029)</span>
-                            <div><span class="type-in">IN</span> <span class="time">09:30 AM</span></div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Entry/Exit Keypad View -->
-        <div id="view-keypad" class="view-section">
-            <div class="card keypad-container">
-                <h2 id="keypad-title">Enter Membership ID</h2>
-                <div class="keypad-display" id="display">----</div>
-                <div class="keypad-grid">
-                    <button class="key" onclick="press(1)">1</button>
-                    <button class="key" onclick="press(2)">2</button>
-                    <button class="key" onclick="press(3)">3</button>
-                    <button class="key" onclick="press(4)">4</button>
-                    <button class="key" onclick="press(5)">5</button>
-                    <button class="key" onclick="press(6)">6</button>
-                    <button class="key" onclick="press(7)">7</button>
-                    <button class="key" onclick="press(8)">8</button>
-                    <button class="key" onclick="press(9)">9</button>
-                    <button class="key clear" onclick="clearDisplay()">C</button>
-                    <button class="key" onclick="press(0)">0</button>
-                    <button class="key clear" onclick="backspace()">←</button>
-                    <button class="key action" onclick="submitID()">CONFIRM</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        let currentInput = "";
-        let mode = "entry";
-
-        function updateDate() {
-            const now = new Date();
-            document.getElementById('current-date').innerText = now.toDateString();
-        }
-        updateDate();
-
-        function showView(view) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('nav li').forEach(l => l.classList.remove('active'));
-
-            if (view === 'home') {
-                document.getElementById('view-home').classList.add('active');
-                document.getElementById('view-title').innerText = "Dashboard";
-            } else {
-                mode = view;
-                document.getElementById('view-keypad').classList.add('active');
-                document.getElementById('view-title').innerText = view === 'entry' ? "Member Entry" : "Member Exit";
-                document.getElementById('keypad-title').innerText = view === 'entry' ? "Scan or Enter Entry ID" : "Scan or Enter Exit ID";
-                clearDisplay();
-            }
-        }
-
-        function press(num) {
-            if (currentInput.length < 4) {
-                currentInput += num;
-                updateDisplay();
-            }
-        }
-
-        function clearDisplay() {
-            currentInput = "";
-            updateDisplay();
-        }
-
-        function backspace() {
-            currentInput = currentInput.slice(0, -1);
-            updateDisplay();
-        }
-
-        function updateDisplay() {
-            const display = document.getElementById('display');
-            display.innerText = currentInput.padEnd(4, '-');
-        }
-
-        function submitID() {
-            if (currentInput.length === 4) {
-                const log = document.getElementById('activity-log');
-                const li = document.createElement('li');
-                li.className = 'log-item';
-                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                li.innerHTML = `
-                    <span>Member ID: ${currentInput}</span>
-                    <div><span class="type-${mode === 'entry' ? 'in' : 'out'}">${mode.toUpperCase()}</span> <span class="time">${time}</span></div>
-                `;
-                log.prepend(li);
-                alert(`${mode === 'entry' ? 'Welcome!' : 'Goodbye!'} ID ${currentInput} confirmed.`);
-                showView('home');
-            } else {
-                alert("Please enter a 4-digit ID");
-            }
-        }
-    </script>
+<div class="shell">
+<header class="topbar">
+<div class="brand"><div class="mark">AK</div><div><h1>AK PACK FITNESS</h1><p>MEMBER ATTENDANCE</p></div></div>
+<div id="connection" class="status"><span class="dot"></span><span id="connectionText">Backend not configured</span></div>
+</header>
+<main class="layout">
+<section class="panel">
+<div class="eyebrow">Member terminal</div><h2>Check in. Show up.</h2><p class="sub">Enter your membership ID or registered mobile number.</p>
+<div class="clock" id="clock">--:--:--</div><div class="today" id="today"></div>
+<label class="field-label" for="identity">MEMBERSHIP ID / MOBILE</label>
+<div class="input-wrap"><input id="identity" class="input" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter ID or mobile" maxlength="16" aria-label="Membership ID or mobile number"><button id="lookupBtn" class="btn btn-primary">Find</button></div>
+<div class="keypad" aria-label="Numeric keypad">
+<button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button>
+<button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button>
+<button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button>
+<button class="key" data-key="clear">Clear</button><button class="key" data-key="0">0</button><button class="key" data-key="back">⌫</button>
+</div>
+<div id="memberCard" class="member-card"><div class="member-name" id="memberName"></div><div class="member-meta" id="memberMeta"></div><span id="memberStatus" class="pill"></span><div class="actions"><button id="clockInBtn" class="btn btn-primary">↗ Clock In</button><button id="clockOutBtn" class="btn btn-secondary">↙ Clock Out</button></div></div>
+<div id="terminalMessage" class="message" role="status" aria-live="polite"></div>
+<details class="settings"><summary>Connection settings</summary><div class="settings-content"><label class="field-label" for="endpoint" style="margin:0">Google Apps Script Web App URL</label><input id="endpoint" class="input" type="url" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveEndpoint" class="btn btn-secondary">Save & test connection</button><div class="small">The terminal stays in demo/offline state until you configure a deployed Apps Script URL.</div></div></details>
+</section>
+<div class="right-stack">
+<section class="panel">
+<div class="section-head"><div><div class="eyebrow">Attendance overview</div><h2>Records & member history</h2><p class="sub" style="margin-bottom:0">Search by date, month, time, name, ID or mobile.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div>
+<div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div>
+<div class="filters">
+<input id="filterDate" class="input" type="date" aria-label="Filter by date">
+<input id="filterMonth" class="input" type="month" aria-label="Filter by month">
+<input id="filterTime" class="input" type="time" aria-label="Filter by time">
+<input id="filterName" class="input" placeholder="Client name" aria-label="Filter by name">
+<input id="filterIdentity" class="input" placeholder="ID / mobile" aria-label="Filter by membership ID or mobile">
+<input id="adminPin" class="input" type="password" inputmode="numeric" placeholder="Admin PIN" aria-label="Admin PIN for records">
+</div>
+<div style="display:flex;gap:8px;margin-top:10px"><button id="searchBtn" class="btn btn-primary">Search records</button><button id="clearFilters" class="btn btn-quiet">Clear filters</button></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Member</th><th>ID</th><th>Clock in</th><th>Clock out</th><th>Status</th></tr></thead><tbody id="recordsBody"><tr><td colspan="6" class="empty">Configure the backend, then search records.</td></tr></tbody></table></div>
+<div id="recordsMessage" class="message" role="status" aria-live="polite"></div>
+<div id="profile" class="profile"><h3 id="profileTitle">Member profile</h3><div id="profileMeta" class="small"></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Status</th></tr></thead><tbody id="profileBody"></tbody></table></div></div>
+</section>
+<section class="panel">
+<div class="eyebrow">Operational notes</div><h2>Reliable records. Real validation.</h2><p class="sub" style="margin-bottom:0">Clock-out is accepted only when a matching active clock-in exists. The server writes attendance to Google Sheets; this screen does not fake successful records.</p>
+<div class="foot"><span>AK PACK FITNESS · ATTENDANCE</span><span id="backendHint">Backend setup required</span></div>
+</section>
+</div>
+</main>
+</div>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let member=null, endpoint=localStorage.getItem('akpack_apps_script_url')||'', busy=false;
+$('endpoint').value=endpoint;
+function pad(n){return String(n).padStart(2,'0')}
+function tick(){const d=new Date();$('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());$('today').textContent=d.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+tick();setInterval(tick,1000);
+function setMessage(id,msg,ok){const el=$(id);el.textContent=msg;el.className='message show '+(ok?'ok':'err')}
+function hideMessage(id){$(id).className='message'}
+function setConnection(connected,text){$('connection').classList.toggle('online',!!connected);$('connectionText').textContent=text;$('backendHint').textContent=connected?'Google Sheets backend connected':'Backend setup required'}
+function digits(v){return String(v||'').replace(/\D/g,'').slice(0,16)}
+$('identity').addEventListener('input',()=>{$('identity').value=digits($('identity').value)});
+document.querySelectorAll('[data-key]').forEach(b=>b.addEventListener('click',()=>{const i=$('identity'),k=b.dataset.key;if(k==='clear')i.value='';else if(k==='back')i.value=i.value.slice(0,-1);else if(i.value.length<16)i.value+=k;i.focus()}));
+async function api(action,data){
+ if(!endpoint)throw new Error('Google Apps Script URL is not configured. Open Connection settings first.');
+ const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},data||{})),redirect:'follow'});
+ if(!res.ok)throw new Error('Backend request failed (HTTP '+res.status+').');
+ let json;try{json=await res.json()}catch(e){throw new Error('Backend response was not JSON. Check the Apps Script deployment URL and access setting.')}
+ if(!json.ok)throw new Error(json.error||'Request failed.');
+ return json;
+}
+function setBusy(v){busy=v;['lookupBtn','clockInBtn','clockOutBtn','searchBtn','refreshBtn','saveEndpoint'].forEach(id=>{if($(id))$(id).disabled=v})}
+async function testConnection(){try{const r=await api('ping');setConnection(true,'Google Sheets connected');return r}catch(e){setConnection(false,'Not connected');throw e}}
+async function lookup(){
+ hideMessage('terminalMessage');const q=digits($('identity').value);if(!q){setMessage('terminalMessage','Enter a membership ID or registered mobile number.',false);return}
+ if(busy)return;setBusy(true);
+ try{const r=await api('lookup',{identity:q});member=r.member;renderMember();setMessage('terminalMessage','Member found. Select Clock In or Clock Out.',true)}
+ catch(e){member=null;$('memberCard').style.display='none';setMessage('terminalMessage',e.message,false)}
+ finally{setBusy(false)}
+}
+function renderMember(){if(!member)return;$('memberCard').style.display='block';$('memberName').textContent=member.name||'Member';$('memberMeta').textContent='ID: '+member.membershipId+' · Mobile: '+(member.mobile||'Not listed');const active=String(member.status||'active').toLowerCase()==='active';$('memberStatus').textContent=active?'MEMBERSHIP ACTIVE':'MEMBERSHIP INACTIVE';$('memberStatus').className='pill '+(active?'active':'inactive');$('clockInBtn').disabled=!active;$('clockOutBtn').disabled=false}
+async function attendance(action){
+ if(!member){setMessage('terminalMessage','Find a member before recording attendance.',false);return}if(busy)return;
+ setBusy(true);hideMessage('terminalMessage');
+ try{const r=await api(action,{membershipId:String(member.membershipId)});setMessage('terminalMessage',r.message|| (action==='clockIn'?'Clock-in recorded.':'Clock-out recorded.'),true);if(r.member)member=r.member;renderMember();await searchRecords(false)}
+ catch(e){setMessage('terminalMessage',e.message,false)}
+ finally{setBusy(false)}
+}
+function rowCell(text){const td=document.createElement('td');td.textContent=text==null?'':String(text);return td}
+function renderRecords(rows){const body=$('recordsBody');body.replaceChildren();if(!rows||!rows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else rows.forEach(r=>{const tr=document.createElement('tr');tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status));tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=(rows||[]).length;$('activeCount').textContent=(rows||[]).filter(r=>!r.clockOut).length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
+async function searchRecords(showErrors){
+ if(!endpoint){if(showErrors)setMessage('recordsMessage','Configure the Google Apps Script URL first.',false);return}
+ if(busy&&showErrors)return;const data={adminPin:$('adminPin').value,date:$('filterDate').value,month:$('filterMonth').value,time:$('filterTime').value,name:$('filterName').value.trim(),identity:digits($('filterIdentity').value)};
+ if(showErrors)setBusy(true);hideMessage('recordsMessage');
+ try{const r=await api('attendanceSearch',data);renderRecords(r.records||[]);if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
+ catch(e){if(showErrors)setMessage('recordsMessage',e.message,false);else console.warn(e)}
+ finally{if(showErrors)setBusy(false)}
+}
+async function loadProfile(id,name){
+ if(!endpoint)return;const pin=$('adminPin').value;if(!pin){setMessage('recordsMessage','Enter the admin PIN to view a client history.',false);return}
+ setBusy(true);
+ try{const r=await api('memberHistory',{membershipId:String(id),adminPin:pin});$('profile').style.display='block';$('profileTitle').textContent=(name||r.member.name||'Member')+' · Attendance history';$('profileMeta').textContent='Membership ID: '+r.member.membershipId+' · Mobile: '+(r.member.mobile||'Not listed');const b=$('profileBody');b.replaceChildren();(r.records||[]).forEach(x=>{const tr=document.createElement('tr');tr.append(rowCell(x.date),rowCell(x.clockIn),rowCell(x.clockOut||'—'),rowCell(x.duration||'—'),rowCell(x.status));b.appendChild(tr)});if(!(r.records||[]).length){const tr=document.createElement('tr'),td=rowCell('No attendance history found.');td.colSpan=5;td.className='empty';tr.appendChild(td);b.appendChild(tr)}$('profile').scrollIntoView({behavior:'smooth',block:'nearest'})}
+ catch(e){setMessage('recordsMessage',e.message,false)}
+ finally{setBusy(false)}
+}
+$('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
+$('saveEndpoint').addEventListener('click',async()=>{const v=$('endpoint').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(v)){setMessage('terminalMessage','Paste the deployed Google Apps Script Web App URL ending in /exec.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setBusy(true);try{await testConnection();setMessage('terminalMessage','Connection verified. Ready to use the attendance terminal.',true)}catch(e){setMessage('terminalMessage',e.message,false)}finally{setBusy(false)}});
+$('searchBtn').addEventListener('click',()=>searchRecords(true));$('refreshBtn').addEventListener('click',()=>searchRecords(true));$('clearFilters').addEventListener('click',()=>{['filterDate','filterMonth','filterTime','filterName','filterIdentity'].forEach(id=>$(id).value='');searchRecords(true)});
+if(endpoint)testConnection().catch(()=>setConnection(false,'Not connected'));else setConnection(false,'Backend not configured');
+})();
+</script>
 </body>
 </html>
