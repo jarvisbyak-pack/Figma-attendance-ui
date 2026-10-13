@@ -33,6 +33,11 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 .side-brand-mark{display:grid;place-items:center;flex:0 0 42px;height:42px;border:1px solid #ff7a35;border-radius:12px;background:linear-gradient(145deg,#302017,#151515);color:#ff8b45;font-size:17px;font-weight:900;letter-spacing:-2px}
 .side-brand-name{font-size:12px;font-weight:900;letter-spacing:.09em;line-height:1.3}
 .side-brand-sub{margin-top:4px;color:#8f969e;font-size:9px;letter-spacing:.14em}
+.sidebar-toggle{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:38px;padding:7px 10px;border:1px solid #292d32;border-radius:9px;background:#17191c;color:#b9bec4;font-size:11px;font-weight:800}
+.sidebar-toggle span:first-child{display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:6px;background:#25292e;color:#ff8c45;font-size:20px;line-height:1}
+.sidebar-toggle:hover{border-color:#51301f;color:#fff}
+.sidebar-toggle-copy{white-space:nowrap}
+
 .side-section-label{padding:0 10px;color:#747c84;font-size:9px;font-weight:800;letter-spacing:.18em}
 .side-nav{display:grid;gap:6px}
 .nav-item{display:flex;align-items:center;gap:11px;width:100%;min-height:48px;padding:8px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:#9ba1a8;text-align:left;transition:background .15s,border-color .15s,color .15s}
@@ -55,17 +60,30 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 #adminPanel{scroll-margin-top:18px}
 #connectionSettings{scroll-margin-top:24px}
 @media(max-width:1100px) and (min-width:681px){
- .shell{grid-template-columns:82px minmax(0,1fr)}
- .sidebar{padding:22px 10px 16px;align-items:center;gap:22px}
- .side-brand{padding:0;justify-content:center}
- .side-brand-copy,.side-section-label,.nav-copy,.side-bottom,.side-foot-copy{display:none}
- .side-nav{width:100%;gap:8px}
- .nav-item{justify-content:center;padding:8px 4px;min-height:48px}
- .nav-icon{flex-basis:32px;height:32px}
- .side-foot{justify-content:center;width:100%;padding-top:14px}
+ .shell{grid-template-columns:240px minmax(0,1fr)}
+ .sidebar{padding:22px 14px 16px;gap:18px}
  .workspace{padding:18px 18px 32px}
 }
+.shell.sidebar-collapsed{grid-template-columns:82px minmax(0,1fr)}
+.shell.sidebar-collapsed .sidebar{padding-left:10px;padding-right:10px;align-items:center;gap:18px}
+.shell.sidebar-collapsed .side-brand{padding:0;justify-content:center}
+.shell.sidebar-collapsed .side-brand-copy,
+.shell.sidebar-collapsed .side-section-label,
+.shell.sidebar-collapsed .nav-copy,
+.shell.sidebar-collapsed .side-bottom,
+.shell.sidebar-collapsed .side-foot-copy,
+.shell.sidebar-collapsed .sidebar-toggle-copy{display:none}
+.shell.sidebar-collapsed .sidebar-toggle{justify-content:center;padding:6px 4px}
+.shell.sidebar-collapsed .sidebar-toggle span:first-child{transform:rotate(180deg)}
+.shell.sidebar-collapsed .side-nav{width:100%;gap:8px}
+.shell.sidebar-collapsed .nav-item{justify-content:center;padding:8px 4px;min-height:48px}
+.shell.sidebar-collapsed .nav-icon{flex-basis:32px;height:32px}
+.shell.sidebar-collapsed .side-foot{justify-content:center;width:100%;padding-top:14px}
 @media(max-width:680px){
+ .sidebar-toggle{display:none}
+}
+@media(max-width:680px){
+ .shell.sidebar-collapsed{display:block;grid-template-columns:none}
  .shell{display:block;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
  .workspace{padding:13px 12px 25px}
  .sidebar{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;min-height:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:block;overflow:visible;border-right:0;border-top:1px solid #343940;background:rgba(16,17,19,.97);backdrop-filter:blur(16px)}
@@ -107,12 +125,13 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <div class="shell" data-current-view="members">
 <aside class="sidebar" aria-label="Primary navigation">
   <div class="side-brand"><div class="side-brand-mark">AK</div><div class="side-brand-copy"><div class="side-brand-name">AK PACK FITNESS</div><div class="side-brand-sub">ATTENDANCE MANAGER</div></div></div>
+  <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar"><span aria-hidden="true">‹</span><span class="sidebar-toggle-copy">Collapse sidebar</span></button>
   <div class="side-section-label">WORKSPACE</div>
   <nav class="side-nav" aria-label="Attendance sections">
-    <button type="button" class="nav-item" data-view="members" aria-current="page"><span class="nav-icon" aria-hidden="true">01</span><span class="nav-copy"><span class="nav-title">Members</span><span class="nav-desc">Member check-in terminal</span></span></button>
-    <button type="button" class="nav-item" data-view="feed"><span class="nav-icon" aria-hidden="true">02</span><span class="nav-copy"><span class="nav-title">Live Feed</span><span class="nav-desc">Latest attendance records</span></span></button>
-    <button type="button" class="nav-item" data-view="admin"><span class="nav-icon" aria-hidden="true">03</span><span class="nav-copy"><span class="nav-title">Admin Panel</span><span class="nav-desc">Records and member history</span></span></button>
-    <button type="button" class="nav-item" data-view="filter"><span class="nav-icon" aria-hidden="true">04</span><span class="nav-copy"><span class="nav-title">Attendance Filter</span><span class="nav-desc">Search by date, time and ID</span></span></button>
+    <button type="button" class="nav-item" data-view="members" aria-current="page"><span class="nav-icon" aria-hidden="true">M</span><span class="nav-copy"><span class="nav-title">Members</span><span class="nav-desc">Member check-in terminal</span></span></button>
+    <button type="button" class="nav-item" data-view="feed"><span class="nav-icon" aria-hidden="true">LF</span><span class="nav-copy"><span class="nav-title">Live Feed</span><span class="nav-desc">Latest attendance records</span></span></button>
+    <button type="button" class="nav-item" data-view="admin"><span class="nav-icon" aria-hidden="true">AP</span><span class="nav-copy"><span class="nav-title">Admin Panel</span><span class="nav-desc">Records and member history</span></span></button>
+    <button type="button" class="nav-item" data-view="filter"><span class="nav-icon" aria-hidden="true">AF</span><span class="nav-copy"><span class="nav-title">Attendance Filter</span><span class="nav-desc">Search by date, time and ID</span></span></button>
   </nav>
   <div class="side-bottom"><strong>Google Sheets backend</strong><p>Shared attendance records across your connected devices.</p></div>
   <div class="side-foot"><div class="side-avatar">AK</div><div class="side-foot-copy"><div class="side-user">AK PACK Admin</div><div class="side-role">Administrator</div></div></div>
@@ -257,6 +276,15 @@ async function loadProfile(id,name){
  finally{setBusy(false)}
 }
 
+const sidebarToggle=$('sidebarToggle');
+sidebarToggle.addEventListener('click',()=>{
+ const shell=document.querySelector('.shell');
+ const collapsed=shell.classList.toggle('sidebar-collapsed');
+ sidebarToggle.setAttribute('aria-expanded',String(!collapsed));
+ sidebarToggle.setAttribute('aria-label',collapsed?'Expand sidebar':'Collapse sidebar');
+ sidebarToggle.title=collapsed?'Expand sidebar':'Collapse sidebar';
+ sidebarToggle.querySelector('span:first-child').textContent=collapsed?'›':'‹';
+});
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
  const view=button.dataset.view;
  document.querySelector('.shell').dataset.currentView=view;
