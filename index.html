@@ -11,10 +11,100 @@
 button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;margin:auto;padding:22px 18px 48px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;display:grid;place-items:center;border:1px solid #ff7a35;border-radius:12px;background:linear-gradient(145deg,#302017,#151515);color:#ff8b45;font-weight:900;letter-spacing:-2px;font-size:18px}.brand h1{font-size:17px;letter-spacing:.12em;margin:0;font-weight:850}.brand p{font-size:11px;color:var(--muted);letter-spacing:.18em;margin:3px 0 0}.status{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--line);border-radius:99px;color:var(--muted);font-size:12px;background:#141619;cursor:pointer}.dot{width:7px;height:7px;background:#8a8f95;border-radius:50%}.status.online .dot{background:var(--green);box-shadow:0 0 10px #50d89066}.layout{display:grid;grid-template-columns:minmax(300px,.88fr) minmax(0,1.35fr);gap:18px}.panel{background:linear-gradient(150deg,#191b1e,#111315);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 16px 45px #0002}.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--orange2);font-weight:800;text-transform:uppercase}.panel h2{font-size:22px;margin:6px 0 5px;letter-spacing:-.03em}.sub{color:var(--muted);font-size:13px;margin:0 0 20px}.clock{font-size:30px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.today{color:var(--muted);font-size:12px;margin-top:1px}.field-label{display:block;color:#c4c8cc;font-size:12px;font-weight:700;margin:18px 0 8px}.input-wrap{display:flex;gap:8px}.input{width:100%;min-width:0;background:#0b0c0e;border:1px solid #343940;border-radius:10px;color:var(--text);padding:13px 14px;outline:none}.input:focus{border-color:var(--orange);box-shadow:0 0 0 3px #ff6b241a}.btn{border:1px solid transparent;border-radius:10px;padding:12px 14px;font-weight:800;transition:transform .15s,opacity .15s}.btn:active{transform:scale(.98)}.btn-primary{background:linear-gradient(135deg,var(--orange),#f04f14);color:#17100c}.btn-secondary{background:#22262b;border-color:#373c42;color:#f2f3f4}.btn-quiet{background:transparent;border-color:#343940;color:#d4d7da}.btn:disabled{opacity:.45;cursor:not-allowed}.input-wrap .btn{white-space:nowrap}.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.key{padding:12px 8px;background:#1b1e22;border:1px solid #30353a;border-radius:9px;color:#e9eaec;font-weight:700}.key:active{background:#343940}.member-card{margin-top:15px;padding:14px;background:#101214;border:1px solid #30343a;border-radius:12px;display:none}.member-name{font-weight:800;font-size:17px}.member-meta{font-size:12px;color:var(--muted);margin-top:3px}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:99px;font-size:11px;font-weight:800;margin-top:9px}.pill.active{background:#133324;color:#70e5a8}.pill.inactive{background:#3b2022;color:#ff8a91}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.actions .btn{padding:15px 10px}.message{display:none;margin-top:12px;border-radius:10px;padding:11px 12px;font-size:13px}.message.show{display:block}.message.ok{background:#102a1e;color:#85efb5;border:1px solid #1d5638}.message.err{background:#321719;color:#ff9ca1;border:1px solid #713034}.right-stack{display:flex;flex-direction:column;gap:18px}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.section-head h2{font-size:19px}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.stat{padding:13px;border:1px solid #2b3035;background:#111315;border-radius:12px}.stat span{display:block;color:var(--muted);font-size:11px}.stat strong{display:block;font-size:23px;margin-top:5px;font-variant-numeric:tabular-nums}.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.filters .input{padding:10px;font-size:12px}.table-wrap{overflow:auto;margin-top:13px;border:1px solid #2b3035;border-radius:11px}table{border-collapse:collapse;width:100%;min-width:560px;font-size:12px}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid #282c31;white-space:nowrap}th{background:#1a1d20;color:#aeb4ba;font-size:10px;text-transform:uppercase;letter-spacing:.08em}td{color:#e2e4e6}tr:last-child td{border-bottom:0}.empty{text-align:center;color:var(--muted);padding:24px}.small{font-size:11px;color:var(--muted)}.profile{display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:15px}.profile h3{margin:0 0 8px;font-size:15px}.profile .table-wrap{margin-top:8px}.settings{margin-top:18px}.settings summary{cursor:pointer;color:#c5c9cd;font-size:12px;font-weight:700}.settings-content{display:grid;gap:9px;margin-top:12px}.settings-content .input{font-size:12px}.foot{display:flex;justify-content:space-between;gap:12px;color:#777e85;font-size:11px;margin-top:18px}.hidden{display:none!important}
 @media(max-width:800px){.shell{padding:15px 12px 30px}.layout{grid-template-columns:1fr}.panel{padding:17px}.topbar{align-items:flex-start}.brand h1{font-size:14px}.status{font-size:10px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.clock{font-size:26px}.actions{gap:7px}.actions .btn{font-size:12px}.stat-grid{gap:6px}.stat{padding:10px}.stat strong{font-size:20px}.brand p{font-size:9px}}
+
+/* Responsive AK PACK app shell and navigation */
+.shell{max-width:none;width:100%;min-height:100vh;margin:0;padding:0;display:grid;grid-template-columns:248px minmax(0,1fr);align-items:stretch}
+.workspace{min-width:0;width:100%;padding:22px clamp(14px,2.3vw,34px) 40px}
+.sidebar{position:sticky;top:0;height:100vh;min-height:620px;display:flex;flex-direction:column;gap:24px;padding:24px 16px 18px;background:#101113;border-right:1px solid #292d32;overflow-y:auto;z-index:20}
+.side-brand{display:flex;align-items:center;gap:11px;padding:0 7px 8px}
+.side-brand-mark{display:grid;place-items:center;flex:0 0 42px;height:42px;border:1px solid #ff7a35;border-radius:12px;background:linear-gradient(145deg,#302017,#151515);color:#ff8b45;font-size:17px;font-weight:900;letter-spacing:-2px}
+.side-brand-name{font-size:12px;font-weight:900;letter-spacing:.09em;line-height:1.3}
+.side-brand-sub{margin-top:4px;color:#8f969e;font-size:9px;letter-spacing:.14em}
+.side-section-label{padding:0 10px;color:#747c84;font-size:9px;font-weight:800;letter-spacing:.18em}
+.side-nav{display:grid;gap:6px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;min-height:48px;padding:8px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:#9ba1a8;text-align:left;transition:background .15s,border-color .15s,color .15s}
+.nav-item:hover{background:#191b1e;color:#f4f5f6}
+.nav-item[aria-current="page"]{border-color:#51301f;background:linear-gradient(100deg,#2b1b13,#1b1714);color:#fff}
+.nav-icon{display:grid;place-items:center;flex:0 0 28px;height:28px;border-radius:8px;background:#1b1e22;color:#aab0b6;font-size:12px;font-weight:800}
+.nav-item[aria-current="page"] .nav-icon{background:#402516;color:#ff8c45}
+.nav-copy{min-width:0;display:grid;gap:2px}
+.nav-title{font-size:11px;font-weight:800}
+.nav-desc{font-size:9px;color:#777f87}
+.nav-item[aria-current="page"] .nav-desc{color:#b3a095}
+.side-bottom{margin-top:auto;padding:13px;border:1px solid #292d32;border-radius:12px;background:#151719}
+.side-bottom strong{display:block;font-size:11px}
+.side-bottom p{margin:5px 0 0;color:#8e959c;font-size:10px;line-height:1.5}
+.side-foot{display:flex;align-items:center;gap:9px;padding:10px 5px 0;border-top:1px solid #292d32}
+.side-avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#352117;color:#ff8c45;font-size:10px;font-weight:900}
+.side-user{font-size:10px;font-weight:800}.side-role{margin-top:3px;color:#8e959c;font-size:9px}
+.topbar{flex-wrap:wrap}
+.layout{max-width:1500px;margin:0 auto}
+#adminPanel{scroll-margin-top:18px}
+#connectionSettings{scroll-margin-top:24px}
+@media(max-width:1100px) and (min-width:681px){
+ .shell{grid-template-columns:82px minmax(0,1fr)}
+ .sidebar{padding:22px 10px 16px;align-items:center;gap:22px}
+ .side-brand{padding:0;justify-content:center}
+ .side-brand-copy,.side-section-label,.nav-copy,.side-bottom,.side-foot-copy{display:none}
+ .side-nav{width:100%;gap:8px}
+ .nav-item{justify-content:center;padding:8px 4px;min-height:48px}
+ .nav-icon{flex-basis:32px;height:32px}
+ .side-foot{justify-content:center;width:100%;padding-top:14px}
+ .workspace{padding:18px 18px 32px}
+}
+@media(max-width:680px){
+ .shell{display:block;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+ .workspace{padding:13px 12px 25px}
+ .sidebar{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;min-height:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:block;overflow:visible;border-right:0;border-top:1px solid #343940;background:rgba(16,17,19,.97);backdrop-filter:blur(16px)}
+ .side-brand,.side-section-label,.side-bottom,.side-foot{display:none}
+ .side-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ .nav-item{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:55px;padding:5px 2px;border-radius:9px;text-align:center}
+ .nav-icon{flex:0 0 24px;width:28px;height:24px;font-size:11px}
+ .nav-copy{display:block;min-width:0}
+ .nav-title{display:block;font-size:9px;line-height:1.2;white-space:nowrap}
+ .nav-desc{display:none}
+ .topbar{gap:10px;margin-bottom:17px}
+ .brand{gap:9px}
+ .brand .mark{width:38px;height:38px}
+ .brand h1{font-size:12px;letter-spacing:.08em}
+ .brand p{font-size:9px;letter-spacing:.1em}
+ #adminPanelToggle{padding:9px 10px;font-size:11px}
+ .status{width:100%;justify-content:center;order:3}
+ .layout{grid-template-columns:minmax(0,1fr);gap:13px}
+ .panel{padding:15px;border-radius:15px}
+ .right-stack{gap:13px}
+ .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .filters .input{min-width:0}
+ .table-wrap{max-width:100%}
+ .foot{flex-wrap:wrap}
+}
+@media(max-width:380px){
+ .workspace{padding-left:9px;padding-right:9px}
+ .brand h1{font-size:11px}
+ #adminPanelToggle{padding:8px;font-size:10px}
+ .panel{padding:12px}
+ .nav-title{font-size:8px}
+ .stat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(min-width:1500px){.workspace{padding-left:36px;padding-right:36px}.layout{gap:22px}}
+
 </style>
 </head>
 <body>
 <div class="shell">
+<aside class="sidebar" aria-label="Primary navigation">
+  <div class="side-brand"><div class="side-brand-mark">AK</div><div class="side-brand-copy"><div class="side-brand-name">AK PACK FITNESS</div><div class="side-brand-sub">ATTENDANCE MANAGER</div></div></div>
+  <div class="side-section-label">WORKSPACE</div>
+  <nav class="side-nav" aria-label="Attendance sections">
+    <button type="button" class="nav-item" data-view="members" aria-current="page"><span class="nav-icon" aria-hidden="true">01</span><span class="nav-copy"><span class="nav-title">Members</span><span class="nav-desc">Member check-in terminal</span></span></button>
+    <button type="button" class="nav-item" data-view="feed"><span class="nav-icon" aria-hidden="true">02</span><span class="nav-copy"><span class="nav-title">Live Feed</span><span class="nav-desc">Latest attendance records</span></span></button>
+    <button type="button" class="nav-item" data-view="admin"><span class="nav-icon" aria-hidden="true">03</span><span class="nav-copy"><span class="nav-title">Admin Panel</span><span class="nav-desc">Records and member history</span></span></button>
+    <button type="button" class="nav-item" data-view="filter"><span class="nav-icon" aria-hidden="true">04</span><span class="nav-copy"><span class="nav-title">Attendance Filter</span><span class="nav-desc">Search by date, time and ID</span></span></button>
+  </nav>
+  <div class="side-bottom"><strong>Google Sheets backend</strong><p>Shared attendance records across your connected devices.</p></div>
+  <div class="side-foot"><div class="side-avatar">AK</div><div class="side-foot-copy"><div class="side-user">AK PACK Admin</div><div class="side-role">Administrator</div></div></div>
+</aside>
+<div class="workspace">
 <header class="topbar">
 <div class="brand"><div class="mark">AK</div><div><h1>AK PACK FITNESS</h1><p>MEMBER ATTENDANCE</p></div></div>
 <button type="button" id="adminPanelToggle" class="btn btn-secondary" aria-expanded="false" aria-controls="adminPanel">Admin Panel</button><button type="button" id="connection" class="status" aria-label="Configure Google Sheets backend"><span class="dot"></span><span id="connectionText">Backend not configured</span><span aria-hidden="true"> · Configure</span></button>
@@ -58,6 +148,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 </section>
 </div>
 </main>
+</div>
 </div>
 <script>
 (function(){
@@ -118,6 +209,32 @@ async function loadProfile(id,name){
  catch(e){setMessage('recordsMessage',e.message,false)}
  finally{setBusy(false)}
 }
+
+document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
+ const view=button.dataset.view;
+ document.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-current',item===button?'page':'false'));
+ if(view==='members'){
+  $('adminPanel').classList.add('hidden');
+  $('identity').focus({preventScroll:true});
+  window.scrollTo({top:0,behavior:'smooth'});
+ }else if(view==='admin'){
+  $('adminPanel').classList.remove('hidden');
+  $('adminPanelToggle').setAttribute('aria-expanded','true');
+  $('adminPanel').scrollIntoView({behavior:'smooth',block:'start'});
+ }else if(view==='filter'){
+  $('adminPanel').classList.remove('hidden');
+  $('adminPanelToggle').setAttribute('aria-expanded','true');
+  $('filterDate').scrollIntoView({behavior:'smooth',block:'center'});
+  $('filterDate').focus({preventScroll:true});
+ }else if(view==='feed'){
+  $('adminPanel').classList.remove('hidden');
+  $('adminPanelToggle').setAttribute('aria-expanded','true');
+  $('recordsBody').scrollIntoView({behavior:'smooth',block:'center'});
+  if(endpoint && $('adminPin').value.trim()) searchRecords(true);
+  else setMessage('recordsMessage','Open Admin Panel, enter your admin PIN, then refresh records to view the latest attendance feed.',false);
+ }
+}));
+
 $('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'})});
 $('connection').addEventListener('click',()=>{const d=$('connectionSettings');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});$('endpoint').focus()});
 $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
