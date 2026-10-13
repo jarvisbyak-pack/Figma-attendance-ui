@@ -16,6 +16,12 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 #adminPanel[data-active-view="feed"] .section-head h2{font-size:19px}
 #identity{caret-color:transparent;touch-action:manipulation}
 .right-stack>.panel:not(#adminPanel){display:none}
+.shell[data-current-view="members"] .right-stack{display:none}
+.shell:not([data-current-view="members"]) #membersPanel{display:none}
+.shell:not([data-current-view="members"]) .layout{display:block;max-width:1100px}
+.shell:not([data-current-view="members"]) .right-stack{display:block}
+.shell:not([data-current-view="members"]) #adminPanel{display:block}
+.shell[data-current-view="members"] #adminPanel{display:none!important}
 @media(max-width:800px){.shell{padding:15px 12px 30px}.layout{grid-template-columns:1fr}.panel{padding:17px}.topbar{align-items:flex-start}.brand h1{font-size:14px}.status{font-size:10px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.clock{font-size:26px}.actions{gap:7px}.actions .btn{font-size:12px}.stat-grid{gap:6px}.stat{padding:10px}.stat strong{font-size:20px}.brand p{font-size:9px}}
 
@@ -117,7 +123,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <button type="button" id="adminPanelToggle" class="btn btn-secondary" aria-expanded="false" aria-controls="adminPanel">Admin Panel</button><button type="button" id="connection" class="status" aria-label="Configure Google Sheets backend"><span class="dot"></span><span id="connectionText">Backend not configured</span><span aria-hidden="true"> · Configure</span></button>
 </header>
 <main class="layout">
-<section class="panel">
+<section class="panel" id="membersPanel">
 <div class="eyebrow">Member terminal</div><h2>Check in. Show up.</h2><p class="sub">Enter your membership ID or registered mobile number.</p>
 <div class="clock" id="clock">--:--:--</div><div class="today" id="today"></div>
 <label class="field-label" for="identity">MEMBERSHIP ID / MOBILE</label>
@@ -253,6 +259,7 @@ async function loadProfile(id,name){
 
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
  const view=button.dataset.view;
+ document.querySelector('.shell').dataset.currentView=view;
  $('adminHeading').textContent=view==='feed'?'Live attendance feed':view==='filter'?'Attendance records filter':'Admin overview';
  document.querySelectorAll('[data-view]').forEach(item=>{if(item===button)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});
  if(view==='members'){
@@ -260,33 +267,31 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
   $('adminPanel').dataset.activeView='admin';
   $('adminPanel').classList.add('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','false');
-  $('identity').focus({preventScroll:true});
-  window.scrollTo({top:0,behavior:'smooth'});
+
  }else if(view==='admin'){
   feedViewActive=false;
   $('adminPanel').dataset.activeView='admin';
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
-  $('adminPanel').scrollIntoView({behavior:'smooth',block:'start'});
+
  }else if(view==='filter'){
   feedViewActive=false;
   $('adminPanel').dataset.activeView='filter';
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
-  $('filterDate').scrollIntoView({behavior:'smooth',block:'center'});
-  $('filterDate').focus({preventScroll:true});
+
  }else if(view==='feed'){
   feedViewActive=true;
   $('adminPanel').dataset.activeView='feed';
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
-  $('recordsBody').scrollIntoView({behavior:'smooth',block:'center'});
+
   if(endpoint && $('adminPin').value.trim()) searchRecords(true);
   else setMessage('recordsMessage','Open Admin Panel, enter your admin PIN, then refresh records to view the latest attendance feed.',false);
  }
 }));
 
-$('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');panel.dataset.activeView='admin';$('adminHeading').textContent='Admin overview';panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===(opening?'admin':'members'))item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'})});
+$('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');const view=opening?'admin':'members';document.querySelector('.shell').dataset.currentView=view;panel.dataset.activeView='admin';$('adminHeading').textContent='Admin overview';panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===view)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});});
 $('connection').addEventListener('click',()=>{const d=$('connectionSettings');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});$('endpoint').focus()});
 $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
 $('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('terminalMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('terminalMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
