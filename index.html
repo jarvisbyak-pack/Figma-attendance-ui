@@ -110,6 +110,10 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
  .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
  .filters .input{min-width:0}
  .table-wrap{max-width:100%}
+.member-directory-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:12px 0}
+.member-directory-status{min-height:20px;color:var(--muted);font-size:12px;margin:8px 0}
+.member-directory-table{min-width:650px}
+@media(max-width:420px){.member-directory-controls{grid-template-columns:minmax(0,1fr)}.member-directory-controls .btn{width:100%}}
  .foot{flex-wrap:wrap}
 }
 @media(max-width:380px){
@@ -159,6 +163,14 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <div id="memberCard" class="member-card"><div class="member-name" id="memberName"></div><div class="member-meta" id="memberMeta"></div><span id="memberStatus" class="pill"></span><div class="actions"><button id="clockInBtn" class="btn btn-primary">↗ Clock In</button><button id="clockOutBtn" class="btn btn-secondary">↙ Clock Out</button></div></div>
 <div id="terminalMessage" class="message" role="status" aria-live="polite"></div>
 <details class="settings" id="connectionSettings"><summary>Connection settings</summary><div class="settings-content"><label class="field-label" for="endpoint" style="margin:0">Google Apps Script Web App URL</label><input id="endpoint" class="input" type="url" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveEndpoint" class="btn btn-secondary">Save & test connection</button><div class="small">After saving the URL, the app reads the live sheet name and column headers from Google Sheets.</div><div id="sheetSchema" class="member-card" style="display:none"><div class="member-name" style="font-size:14px">Detected Google Sheets columns</div><div id="sheetNameLabel" class="member-meta"></div><div id="sheetColumns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div><div id="sheetMapping" class="small" style="margin-top:10px"></div></div></div></details>
+<section class="settings" id="memberDirectory" aria-labelledby="memberDirectoryHeading">
+  <div class="section-head"><div><div class="eyebrow">Member records</div><h2 id="memberDirectoryHeading">Member directory</h2><p class="sub" style="margin-bottom:0">Search members and check their membership expiry.</p></div><button type="button" id="memberDirectoryRefresh" class="btn btn-quiet">Load / refresh</button></div>
+  <label class="field-label" for="memberDirectoryPin">ADMIN PIN</label>
+  <input id="memberDirectoryPin" class="input" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter admin PIN to load members" aria-label="Admin PIN for member directory">
+  <div class="member-directory-controls"><input id="memberDirectorySearch" class="input" type="search" placeholder="Search name, membership ID or mobile" aria-label="Search member directory"><button type="button" id="memberDirectorySearchBtn" class="btn btn-secondary">Search</button></div>
+  <div id="memberDirectoryStatus" class="member-directory-status" role="status" aria-live="polite">Enter the admin PIN, then load the member directory.</div>
+  <div class="table-wrap"><table class="member-directory-table"><thead><tr><th>Membership ID</th><th>Member</th><th>Mobile</th><th>Status</th><th>Expiry date</th><th>Expiry condition</th></tr></thead><tbody id="memberDirectoryBody"><tr><td colspan="6" class="empty">Member list has not been loaded.</td></tr></tbody></table></div>
+</section>
 </section>
 <div class="right-stack">
 <section class="panel hidden" id="adminPanel" aria-label="Admin Panel" data-active-view="admin">
@@ -173,7 +185,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 
 </div>
 <div style="display:flex;gap:8px;margin-top:10px"><button id="searchBtn" class="btn btn-primary">Search records</button><button id="clearFilters" class="btn btn-quiet">Clear filters</button></div>
-<div class="table-wrap"><table><thead><tr><th>Date</th><th>Member</th><th>ID</th><th>Clock in</th><th>Clock out</th><th>Status</th></tr></thead><tbody id="recordsBody"><tr><td colspan="6" class="empty">Configure the backend, then search records.</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Member</th><th>ID</th><th>Clock in</th><th>Clock out</th><th>Attendance status</th><th>Membership expiry</th></tr></thead><tbody id="recordsBody"><tr><td colspan="7" class="empty">Configure the backend, then search records.</td></tr></tbody></table></div>
 <div id="recordsMessage" class="message" role="status" aria-live="polite"></div></div>
 <div id="profile" class="profile"><h3 id="profileTitle">Member profile</h3><div id="profileMeta" class="small"></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Status</th></tr></thead><tbody id="profileBody"></tbody></table></div></div>
 </section>
@@ -190,6 +202,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 'use strict';
 const $=id=>document.getElementById(id);
 let member=null, endpoint=localStorage.getItem('akpack_apps_script_url')||'', busy=false;
+let memberCache=[], memberCachePin='', memberCacheLoaded=false;
 $('endpoint').value=endpoint;
 function pad(n){return String(n).padStart(2,'0')}
 function tick(){const d=new Date();$('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());$('today').textContent=d.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
@@ -228,9 +241,40 @@ async function attendance(action){
  finally{setBusy(false)}
 }
 function rowCell(text){const td=document.createElement('td');td.textContent=text==null?'':String(text);return td}
-function expiryInfo(r){const raw=r.expiryDate||r.expiry||r.membershipExpiry||r.expiry_date||r["Expiry Date"]||"";if(!raw)return {label:"Expiry not provided",kind:"unknown",date:"—"};const d=new Date(raw);if(Number.isNaN(d.getTime()))return {label:"Expiry date unavailable",kind:"unknown",date:String(raw)};d.setHours(0,0,0,0);const today=new Date();today.setHours(0,0,0,0);const days=Math.ceil((d-today)/86400000);if(days<=0)return {label:days===0?"Expires today":"Expired "+Math.abs(days)+"d ago",kind:"expired",date:d.toLocaleDateString()};if(days<=5)return {label:days+"d left",kind:"soon",date:d.toLocaleDateString()};return {label:days+"d left",kind:"active",date:d.toLocaleDateString()}}
+function memberExpiryValue(r){return r&&(r.expiryDate||r.expiry||r.membershipExpiry||r.expiry_date||r["Expiry Date"]||r.validTill||r.valid_till||r["Valid Till"]||r.expirationDate)||""}
+function memberKey(r){return String(r&&(r.membershipId??r.membershipID??r.memberId??r.id??r["Membership ID"]??r["Member ID"])??"").trim()}
+function withMemberExpiry(r){const found=memberCache.find(m=>memberKey(m)===memberKey(r));return Object.assign({},r,{expiryDate:memberExpiryValue(r)||memberExpiryValue(found)})}
+function expiryInfo(r){const raw=memberExpiryValue(r);if(!raw)return {label:"Expiry not provided",kind:"unknown",date:"—"};const d=new Date(raw);if(Number.isNaN(d.getTime()))return {label:"Expiry date unavailable",kind:"unknown",date:String(raw)};d.setHours(0,0,0,0);const today=new Date();today.setHours(0,0,0,0);const days=Math.ceil((d-today)/86400000);if(days<=0)return {label:days===0?"Expires today":"Expired "+Math.abs(days)+"d ago",kind:"expired",date:d.toLocaleDateString()};if(days<=5)return {label:days+"d left",kind:"soon",date:d.toLocaleDateString()};return {label:days+"d left",kind:"active",date:d.toLocaleDateString()}}
 function renderLiveFeed(rows){const host=$('liveFeedList');host.replaceChildren();const events=[];(rows||[]).forEach(r=>{const expiry=expiryInfo(r);if(r.clockIn&&String(r.clockIn).trim()!=="—")events.push({r,expiry,type:"Check In",time:r.clockIn,sortTime:eventTimestamp(r.date,r.clockIn),order:events.length});if(r.clockOut&&String(r.clockOut).trim()!=="—")events.push({r,expiry,type:"Check Out",time:r.clockOut,sortTime:eventTimestamp(r.date,r.clockOut),order:events.length})});events.sort((a,b)=>{const at=a.sortTime==null?-Infinity:a.sortTime,bt=b.sortTime==null?-Infinity:b.sortTime;return bt-at||a.order-b.order});if(!events.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='No check-in or check-out events returned yet.';host.appendChild(empty);return}events.slice(0,60).forEach(e=>{const card=document.createElement('article');card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:13px;border:1px solid #2b3035;border-radius:12px;background:#111315';const main=document.createElement('div');main.style.cssText='min-width:0';const name=document.createElement('div');name.style.cssText='font-weight:800;font-size:13px';name.textContent=e.r.name||'Member';const meta=document.createElement('div');meta.style.cssText='color:#9ba1a8;font-size:11px;margin-top:4px';meta.textContent='ID '+(e.r.membershipId||'—')+' · '+(e.r.date||'')+' '+e.time;const expiry=document.createElement('div');expiry.style.cssText='color:#b9bec4;font-size:11px;margin-top:5px';expiry.textContent='Expiry: '+e.expiry.date+' · '+e.expiry.label;main.append(name,meta,expiry);const badges=document.createElement('div');badges.style.cssText='display:grid;justify-items:end;gap:6px';const event=document.createElement('span');event.style.cssText='font-size:10px;font-weight:800;padding:5px 8px;border-radius:99px;background:'+(e.type==='Check In'?'#183b2a':'#202b3a')+';color:'+(e.type==='Check In'?'#69e3a0':'#9cc8ff');event.textContent=e.type;const status=document.createElement('span');const colors={expired:['#45191c','#ff747b'],soon:['#492d0b','#ffb02e'],active:['#123d2a','#38d98a'],unknown:['#292d32','#b9bec4']};const palette=colors[e.expiry.kind];status.style.cssText='font-size:10px;font-weight:800;padding:5px 8px;border-radius:99px;background:'+palette[0]+';color:'+palette[1];status.textContent=e.expiry.kind==='expired'?'EXPIRED':e.expiry.kind==='soon'?'EXPIRING SOON':e.expiry.kind==='active'?'ACTIVE':'NO EXPIRY DATA';badges.append(event,status);card.append(main,badges);host.appendChild(card)})}
-function renderRecords(rows){renderLiveFeed(rows);const body=$('recordsBody');body.replaceChildren();if(!rows||!rows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else rows.forEach(r=>{const tr=document.createElement('tr');tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status));tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=(rows||[]).length;$('activeCount').textContent=(rows||[]).filter(r=>!r.clockOut).length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
+function renderRecords(rows){const displayRows=(rows||[]).map(withMemberExpiry);renderLiveFeed(displayRows);const body=$('recordsBody');body.replaceChildren();if(!displayRows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=7;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else displayRows.forEach(r=>{const tr=document.createElement('tr'),expiry=expiryInfo(r);tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status),rowCell(expiry.date+' · '+expiry.label));tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=displayRows.length;$('activeCount').textContent=displayRows.filter(r=>!r.clockOut||String(r.clockOut).trim()==='—').length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
+async function fetchMemberRows(pin){
+ const response=await api('memberList',{adminPin:pin});
+ const rows=Array.isArray(response.members)?response.members:Array.isArray(response.memberList)?response.memberList:Array.isArray(response.records)?response.records:Array.isArray(response.data)?response.data:null;
+ if(!rows)throw new Error('The memberList action did not return a member array. Check the Apps Script response format.');
+ memberCache=rows;memberCachePin=pin;memberCacheLoaded=true;return rows;
+}
+function renderMemberDirectory(rows){
+ const body=$('memberDirectoryBody'),query=$('memberDirectorySearch').value.trim().toLowerCase();body.replaceChildren();
+ const filtered=(rows||[]).filter(m=>[memberKey(m),m.name||m.memberName||m['Name']||'',m.mobile||m.phone||m.phoneNumber||m['Mobile']||'',m.status||m['Status']||''].some(v=>String(v||'').toLowerCase().includes(query)));
+ if(!filtered.length){const tr=document.createElement('tr'),td=rowCell(query?'No members match this search.':'No members were returned.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr)}
+ else filtered.forEach(m=>{const expiry=expiryInfo(m),tr=document.createElement('tr');tr.append(rowCell(memberKey(m)||'—'),rowCell(m.name||m.memberName||m['Name']||'—'),rowCell(m.mobile||m.phone||m.phoneNumber||m['Mobile']||'—'),rowCell(m.status||m['Status']||'Not specified'),rowCell(expiry.date),rowCell(expiry.label));body.appendChild(tr)});
+ $('memberDirectoryStatus').textContent='Showing '+filtered.length+' of '+(rows||[]).length+' members'+(memberCacheLoaded?' · Data loaded from Google Sheets.':'');
+}
+async function loadMemberDirectory(){
+ const pin=$('memberDirectoryPin').value.trim()||$('adminPin').value.trim();
+ if(!pin){$('memberDirectoryStatus').textContent='Enter the admin PIN to load the member directory.';return}
+ $('memberDirectoryPin').value=pin;$('adminPin').value=pin;
+ $('memberDirectoryStatus').textContent='Loading members from Google Sheets…';
+ $('memberDirectoryRefresh').disabled=true;
+ try{const rows=await fetchMemberRows(pin);renderMemberDirectory(rows)}
+ catch(e){$('memberDirectoryStatus').textContent='Could not load members: '+e.message}
+ finally{$('memberDirectoryRefresh').disabled=false}
+}
+async function ensureMemberCache(){
+ const pin=$('adminPin').value.trim();
+ if(!pin|| (memberCacheLoaded&&memberCachePin===pin))return;
+ try{await fetchMemberRows(pin)}catch(e){console.warn('Member expiry enrichment unavailable:',e)}
+}
 let feedViewActive=false, recordsRequestInFlight=false;
 function eventTimestamp(dateValue,timeValue){
  const dateText=String(dateValue==null?'':dateValue).trim();
@@ -267,7 +311,7 @@ async function searchRecords(showErrors){
  if(feedViewActive&&!$('adminPin').value.trim()){$('feedState').textContent='Enter the admin PIN to load the live feed.';return}
  if(busy&&showErrors)return;if(recordsRequestInFlight)return;recordsRequestInFlight=true;const data={adminPin:$('adminPin').value,date:$('filterDate').value,month:$('filterMonth').value,time:$('filterTime').value,name:$('filterName').value.trim(),identity:digits($('filterIdentity').value)};
  if(showErrors)setBusy(true);hideMessage('recordsMessage');
- try{const r=await api('attendanceSearch',data);renderRecords(r.records||[]);$('feedState').textContent='Live feed updated at '+new Date().toLocaleTimeString()+' · refreshes every 5 seconds while Live Feed is selected.';if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
+ try{await ensureMemberCache();const r=await api('attendanceSearch',data);renderRecords(r.records||[]);$('feedState').textContent='Live feed updated at '+new Date().toLocaleTimeString()+' · refreshes every 5 seconds while Live Feed is selected.';if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
  catch(e){if(showErrors)setMessage('recordsMessage',e.message,false);else console.warn(e)}
  finally{recordsRequestInFlight=false;if(showErrors)setBusy(false)}
 }
@@ -295,6 +339,7 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  document.querySelectorAll('[data-view]').forEach(item=>{if(item===button)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});
  if(view==='members'){
   feedViewActive=false;
+  if($('memberDirectoryPin').value.trim()||$('adminPin').value.trim())loadMemberDirectory();
   $('adminPanel').dataset.activeView='admin';
   $('adminPanel').classList.add('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','false');
@@ -322,11 +367,12 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  }
 }));
 
-$('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');const view=opening?'admin':'members';document.querySelector('.shell').dataset.currentView=view;panel.dataset.activeView='admin';$('adminHeading').textContent='Admin overview';panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===view)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});});
+$('adminPanelToggle').addEventListener('click',()=>{feedViewActive=false;const panel=$('adminPanel');const opening=panel.classList.contains('hidden');const view=opening?'admin':'members';document.querySelector('.shell').dataset.currentView=view;panel.dataset.activeView='admin';$('adminHeading').textContent='Admin overview';panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===view)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});});
 $('connection').addEventListener('click',()=>{const d=$('connectionSettings');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});$('endpoint').focus()});
 $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
 $('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('terminalMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('terminalMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
 $('searchBtn').addEventListener('click',()=>searchRecords(true));$('refreshBtn').addEventListener('click',()=>searchRecords(true));$('clearFilters').addEventListener('click',()=>{['filterDate','filterMonth','filterTime','filterName','filterIdentity'].forEach(id=>$(id).value='');searchRecords(true)});
+$('memberDirectoryRefresh').addEventListener('click',loadMemberDirectory);$('memberDirectorySearchBtn').addEventListener('click',()=>renderMemberDirectory(memberCache));$('memberDirectorySearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderMemberDirectory(memberCache)});$('memberDirectoryPin').addEventListener('keydown',e=>{if(e.key==='Enter')loadMemberDirectory()});$('memberDirectoryPin').addEventListener('input',()=>{if($('memberDirectoryPin').value.trim()!==memberCachePin){memberCacheLoaded=false;memberCache=[]}});
 if(endpoint)testConnection().catch(e=>{setConnection(false,'URL saved · not connected');console.warn('Apps Script connection test failed:',e)});else setConnection(false,'Backend not configured');
 setInterval(()=>{if(feedViewActive&&endpoint&&$('adminPin').value.trim()&&!busy)searchRecords(false)},5000);
 })();
