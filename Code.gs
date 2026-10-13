@@ -13,11 +13,15 @@ const ATTENDANCE_SHEET = 'ATTENDANCE';
 const MEMBER_HEADERS = ['Membership ID', 'Name', 'Mobile', 'Status', 'Expiry'];
 const ATTENDANCE_HEADERS = ['Membership ID', 'Name', 'Mobile', 'Date', 'Clock In', 'Clock Out', 'Duration', 'Status', 'Updated At'];
 
-function doGet() {
-  return json_({ok:true,service:'AK PACK FITNESS Attendance API',version:3,actions:['schema',
-    'ping','lookup','clockIn','clockOut','attendanceSearch','memberHistory',
-    'memberList','memberCreate','memberUpdate','memberArchive'
-  ]});
+function doGet(e) {
+  try {
+    const action = String(e && e.parameter && e.parameter.action || '');
+    if (action === 'ping') return json_(ping_());
+    if (action === 'schema') return json_(schema_());
+    return json_({ok:true,service:'AK PACK FITNESS Attendance API',version:3,actions:['schema','ping','lookup','clockIn','clockOut','attendanceSearch','memberHistory','memberList','memberCreate','memberUpdate','memberArchive']});
+  } catch (err) {
+    return json_({ok:false,error:safeMessage_(err)});
+  }
 }
 function doPost(e) {
   try {
@@ -50,12 +54,12 @@ function ensureSheet_(name,headers){const ss=spreadsheet_();let sh=ss.getSheets(
 function membersSheet_(){return ensureSheet_(MEMBERS_SHEET,MEMBER_HEADERS);}
 function attendanceSheet_(){return ensureSheet_(ATTENDANCE_SHEET,ATTENDANCE_HEADERS);}
 function ping_(){const s=schema_();return {ok:true,message:'Google Sheets connection successful.',spreadsheet:s.spreadsheet,sheet:s.memberSheet,columns:s.columns,spreadsheetConfigured:true,actions:s.actions};}
-function schema_(){const ss=spreadsheet_(),sh=membersSheet_(),lastCol=Math.max(1,sh.getLastColumn()),headers=sh.getRange(1,1,1,lastCol).getDisplayValues()[0].map(v=>String(v).trim()).filter(Boolean);const hm=headerMap_(sh);const aliases={membershipId:['membership id','membershipid','member id','id','membership no','membership number','member no','client id'],name:['name','member name','client name','full name','customer name'],mobile:['mobile','mobile number','phone','phone number','registered mobile','contact number','whatsapp number'],status:['status','membership status','member status'],expiry:['expiry','expiry date','membership expiry','valid till','valid until','end date']};const mapped={};Object.keys(aliases).forEach(k=>{const i=hm.col(aliases[k]);mapped[k]=i<0?null:headers[i]||hm.headers[i]});return {ok:true,service:'AK PACK FITNESS Attendance API',version:3,spreadsheet:ss.getName(),memberSheet:sh.getName(),columns:headers,mappedColumns:mapped,memberRows:Math.max(0,sh.getLastRow()-1),attendanceSheet:attendanceSheet_().getName(),actions:['lookup','clockIn','clockOut','attendanceSearch','memberHistory','memberList','memberCreate','memberUpdate','memberArchive']};}
-function digits_(v){return String(v==null?'':v).replace(/\\D/g,'');}
+function schema_(){const ss=spreadsheet_(),sh=membersSheet_(),lastCol=Math.max(1,sh.getLastColumn()),rawHeaders=sh.getRange(1,1,1,lastCol).getDisplayValues()[0].map(v=>String(v).trim()),headers=rawHeaders.filter(Boolean);const hm=headerMap_(sh);const aliases={membershipId:['membership id','membershipid','member id','id','membership no','membership number','member no','client id'],name:['name','member name','client name','full name','customer name'],mobile:['mobile','mobile number','phone','phone number','registered mobile','contact number','whatsapp number'],status:['status','membership status','member status'],expiry:['expiry','expiry date','membership expiry','valid till','valid until','end date']};const mapped={};Object.keys(aliases).forEach(k=>{const i=hm.col(aliases[k]);mapped[k]=i<0?null:rawHeaders[i]||null});return {ok:true,service:'AK PACK FITNESS Attendance API',version:3,spreadsheet:ss.getName(),memberSheet:sh.getName(),columns:headers,mappedColumns:mapped,memberRows:Math.max(0,sh.getLastRow()-1),attendanceSheet:attendanceSheet_().getName(),actions:['lookup','clockIn','clockOut','attendanceSearch','memberHistory','memberList','memberCreate','memberUpdate','memberArchive']};}
+function digits_(v){return String(v==null?'':v).replace(/\D/g,'');}
 function mobileKey_(v){let s=digits_(v);if(s.length>10)s=s.slice(-10);return s;}
 function tz_(){return Session.getScriptTimeZone()||'Asia/Kolkata';}
-function dateText_(v){if(!v)return '';if(v instanceof Date&&!isNaN(v.getTime()))return Utilities.formatDate(v,tz_(),'yyyy-MM-dd');const s=String(v).trim();if(/^\\d{4}-\\d{2}-\\d{2}$/.test(s))return s;const d=new Date(s);return isNaN(d.getTime())?s:Utilities.formatDate(d,tz_(),'yyyy-MM-dd');}
-function timeText_(v){if(!v)return '';if(v instanceof Date&&!isNaN(v.getTime()))return Utilities.formatDate(v,tz_(),'HH:mm:ss');if(typeof v==='number'){const n=Math.round(v*86400);return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(x=>('0'+x).slice(-2)).join(':');}const m=String(v).trim().match(/(\\d{1,2}:\\d{2}(?::\\d{2})?)/);return m?(m[1].length===5?m[1]+':00':m[1]):String(v).trim();}
+function dateText_(v){if(!v)return '';if(v instanceof Date&&!isNaN(v.getTime()))return Utilities.formatDate(v,tz_(),'yyyy-MM-dd');const s=String(v).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const d=new Date(s);return isNaN(d.getTime())?s:Utilities.formatDate(d,tz_(),'yyyy-MM-dd');}
+function timeText_(v){if(!v)return '';if(v instanceof Date&&!isNaN(v.getTime()))return Utilities.formatDate(v,tz_(),'HH:mm:ss');if(typeof v==='number'){const n=Math.round(v*86400);return [Math.floor(n/3600),Math.floor(n%3600/60),n%60].map(x=>('0'+x).slice(-2)).join(':');}const m=String(v).trim().match(/(\d{1,2}:\d{2}(?::\d{2})?)/);return m?(m[1].length===5?m[1]+':00':m[1]):String(v).trim();}
 function dateTime_(d,t){const ds=dateText_(d),ts=timeText_(t);if(!ds||!ts)return null;const a=ds.split('-').map(Number),b=ts.split(':').map(Number);return new Date(a[0],a[1]-1,a[2],b[0]||0,b[1]||0,b[2]||0);}
 function headerMap_(sh){const hs=sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0].map(v=>String(v).trim().toLowerCase());return {headers:hs,col:function(aliases){return hs.findIndex(h=>aliases.indexOf(h)>=0);}};}
 function readMembers_(){
@@ -64,7 +68,7 @@ function readMembers_(){
  if(id<0||name<0)throw new Error('MEMBERS sheet must contain Membership ID and Name columns.');
  return values.slice(1).map((r,i)=>({rowNumber:i+2,membershipId:digits_(r[id]),name:String(r[name]||'').trim(),mobile:mobile<0?'':digits_(r[mobile]),status:status<0||!String(r[status]).trim()?'active':String(r[status]).trim(),expiry:expiry<0?'':dateText_(r[expiry])})).filter(m=>m.membershipId);
 }
-function memberActive_(m){const s=String(m.status||'active').trim().toLowerCase();if(['inactive','expired','blocked','suspended','archived','false','0','no'].indexOf(s)>=0)return false;if(m.expiry&&/^\\d{4}-\\d{2}-\\d{2}$/.test(m.expiry)&&m.expiry<Utilities.formatDate(new Date(),tz_(),'yyyy-MM-dd'))return false;return true;}
+function memberActive_(m){const s=String(m.status||'active').trim().toLowerCase();if(['inactive','expired','blocked','suspended','archived','false','0','no'].indexOf(s)>=0)return false;if(m.expiry&&/^\d{4}-\d{2}-\d{2}$/.test(m.expiry)&&m.expiry<Utilities.formatDate(new Date(),tz_(),'yyyy-MM-dd'))return false;return true;}
 function publicMember_(m){return {membershipId:m.membershipId,name:m.name,mobile:m.mobile,status:memberActive_(m)?'active':'inactive',storedStatus:m.status,expiry:m.expiry};}
 function findMember_(identity){const q=digits_(identity);if(!q)throw new Error('Enter a numeric membership ID or registered mobile number.');const ms=readMembers_();let m=ms.find(x=>x.membershipId===q);if(!m&&mobileKey_(q).length>=10)m=ms.find(x=>mobileKey_(x.mobile)===mobileKey_(q));if(!m)throw new Error('No member found for that membership ID or registered mobile number.');return m;}
 function lookupMember_(identity){return {ok:true,member:publicMember_(findMember_(identity))};}
@@ -88,7 +92,7 @@ function cleanMemberInput_(m,existing){
  const name=String(m.name==null?(existing?existing.name:''):m.name).trim();if(!name)throw new Error('Member name is required.');
  const mobile=digits_(m.mobile==null?(existing?existing.mobile:''):m.mobile);if(mobile&&mobile.length<10)throw new Error('Enter a valid registered mobile number with at least 10 digits.');
  const status=String(m.status==null?(existing?existing.status:'active'):m.status).trim()||'active';
- const expiry=String(m.expiry==null?(existing?existing.expiry:''):m.expiry).trim();if(expiry&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(expiry))throw new Error('Expiry must be a valid YYYY-MM-DD date.');
+ const expiry=String(m.expiry==null?(existing?existing.expiry:''):m.expiry).trim();if(expiry&&!/^\d{4}-\d{2}-\d{2}$/.test(expiry))throw new Error('Expiry must be a valid YYYY-MM-DD date.');
  return {name:name,mobile:mobile,status:status,expiry:expiry};
 }
 function createMember_(input){return withLock_(function(){const sh=membersSheet_();const fields=cleanMemberInput_(input,null),members=readMembers_();if(fields.mobile&&members.some(m=>mobileKey_(m.mobile)===mobileKey_(fields.mobile)))throw new Error('That mobile number is already assigned to a member.');const id=nextMembershipId_(),member={membershipId:id,name:fields.name,mobile:fields.mobile,status:fields.status,expiry:fields.expiry};writeMember_(null,member);return {ok:true,message:'Member created with membership ID '+id+'.',member:publicMember_(member),members:listMembers_('')};});}
