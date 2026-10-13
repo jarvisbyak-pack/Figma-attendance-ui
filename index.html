@@ -17,7 +17,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <div class="shell">
 <header class="topbar">
 <div class="brand"><div class="mark">AK</div><div><h1>AK PACK FITNESS</h1><p>MEMBER ATTENDANCE</p></div></div>
-<button type="button" id="connection" class="status" aria-label="Configure Google Sheets backend"><span class="dot"></span><span id="connectionText">Backend not configured</span><span aria-hidden="true"> · Configure</span></button>
+<button type="button" id="adminPanelToggle" class="btn btn-secondary" aria-expanded="false" aria-controls="adminPanel">Admin Panel</button><button type="button" id="connection" class="status" aria-label="Configure Google Sheets backend"><span class="dot"></span><span id="connectionText">Backend not configured</span><span aria-hidden="true"> · Configure</span></button>
 </header>
 <main class="layout">
 <section class="panel">
@@ -36,8 +36,8 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <details class="settings" id="connectionSettings"><summary>Connection settings</summary><div class="settings-content"><label class="field-label" for="endpoint" style="margin:0">Google Apps Script Web App URL</label><input id="endpoint" class="input" type="url" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveEndpoint" class="btn btn-secondary">Save & test connection</button><div class="small">After saving the URL, the app reads the live sheet name and column headers from Google Sheets.</div><div id="sheetSchema" class="member-card" style="display:none"><div class="member-name" style="font-size:14px">Detected Google Sheets columns</div><div id="sheetNameLabel" class="member-meta"></div><div id="sheetColumns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div><div id="sheetMapping" class="small" style="margin-top:10px"></div></div></div></details>
 </section>
 <div class="right-stack">
-<section class="panel">
-<div class="section-head"><div><div class="eyebrow">Attendance overview</div><h2>Records & member history</h2><p class="sub" style="margin-bottom:0">Search by date, month, time, name, ID or mobile.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div>
+<section class="panel hidden" id="adminPanel" aria-label="Admin Panel">
+<div class="section-head"><div><div class="eyebrow">Admin Panel · Attendance</div><h2>Records & member history</h2><p class="sub" style="margin-bottom:0">Search by date, month, time, name, ID or mobile.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div>
 <div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div>
 <div class="filters">
 <input id="filterDate" class="input" type="date" aria-label="Filter by date">
@@ -53,23 +53,6 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <div id="profile" class="profile"><h3 id="profileTitle">Member profile</h3><div id="profileMeta" class="small"></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Status</th></tr></thead><tbody id="profileBody"></tbody></table></div></div>
 </section>
 <section class="panel">
-<div class="eyebrow">Member management</div><h2>Create, fetch & edit members</h2><p class="sub">Changes sync directly with the MEMBERS sheet. Membership IDs are assigned automatically and never changed during edits.</p>
-<div class="filters" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-<input id="memberQuery" class="input" placeholder="Search name / ID / mobile" aria-label="Search members">
-<button id="pullMembers" class="btn btn-secondary">Pull members from Sheets</button>
-</div>
-<div class="filters" style="margin-top:10px">
-<input id="memberNameInput" class="input" placeholder="Full name" aria-label="Member full name">
-<input id="memberMobileInput" class="input" inputmode="numeric" placeholder="Registered mobile" aria-label="Member mobile">
-<select id="memberStatusInput" class="input" aria-label="Membership status"><option value="active">Active</option><option value="inactive">Inactive</option><option value="expired">Expired</option><option value="suspended">Suspended</option></select>
-<input id="memberExpiryInput" class="input" type="date" aria-label="Membership expiry date">
-</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="saveMember" class="btn btn-primary">Create member</button><button id="cancelMemberEdit" class="btn btn-quiet">Clear form</button><span id="memberEditingLabel" class="small" style="align-self:center"></span></div>
-<div id="memberMessage" class="message" role="status" aria-live="polite"></div>
-<div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead><tbody id="membersBody"><tr><td colspan="6" class="empty">Enter admin PIN and pull members from Sheets.</td></tr></tbody></table></div>
-<div class="foot"><span>MEMBER DIRECTORY</span><span>Edits preserve existing membership IDs</span></div>
-</section>
-<section class="panel">
 <div class="eyebrow">Operational notes</div><h2>Reliable records. Real validation.</h2><p class="sub" style="margin-bottom:0">Clock-out is accepted only when a matching active clock-in exists. The server writes attendance to Google Sheets; this screen does not fake successful records.</p>
 <div class="foot"><span>AK PACK FITNESS · ATTENDANCE</span><span id="backendHint">Backend setup required</span></div>
 </section>
@@ -80,7 +63,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-let member=null, endpoint=localStorage.getItem('akpack_apps_script_url')||'', busy=false, editingMemberId=null, cachedMembers=[];
+let member=null, endpoint=localStorage.getItem('akpack_apps_script_url')||'', busy=false;
 $('endpoint').value=endpoint;
 function pad(n){return String(n).padStart(2,'0')}
 function tick(){const d=new Date();$('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());$('today').textContent=d.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
@@ -99,9 +82,10 @@ async function api(action,data){
  if(!json.ok)throw new Error(json.error||'Request failed.');
  return json;
 }
-function setBusy(v){busy=v;['lookupBtn','clockInBtn','clockOutBtn','searchBtn','refreshBtn','saveEndpoint','pullMembers','saveMember'].forEach(id=>{if($(id))$(id).disabled=v})}
+function setBusy(v){busy=v;['lookupBtn','clockInBtn','clockOutBtn','searchBtn','refreshBtn','saveEndpoint','adminPanelToggle'].forEach(id=>{if($(id))$(id).disabled=v})}
 function renderSheetSchema(r){const wrap=$('sheetSchema');if(!r||!Array.isArray(r.columns))return;wrap.style.display='block';$('sheetNameLabel').textContent='Spreadsheet: '+(r.spreadsheet||'Connected')+' · Member tab: '+(r.memberSheet||'members')+' · Client rows: '+(r.memberRows==null?'—':r.memberRows);const tags=$('sheetColumns');tags.replaceChildren();r.columns.forEach(name=>{const tag=document.createElement('span');tag.textContent=name;tag.style.cssText='font-size:11px;padding:5px 8px;border:1px solid #373c42;border-radius:99px;background:#1c2024;color:#e6e8ea';tags.appendChild(tag)});const m=r.mappedColumns||{};$('sheetMapping').textContent='Detected fields — ID: '+(m.membershipId||'NOT FOUND')+' · Name: '+(m.name||'NOT FOUND')+' · Mobile: '+(m.mobile||'optional')+' · Status: '+(m.status||'optional')+' · Expiry: '+(m.expiry||'optional');if(!m.membershipId||!m.name){$('sheetMapping').textContent+=' · Required: add a Membership ID and Name column (or supported equivalent) to the members header row.';$('sheetMapping').style.color='var(--red)'}else $('sheetMapping').style.color='var(--muted)'}
-async function testConnection(){try{const r=await api('ping');renderSheetSchema(r);setConnection(true,'Google Sheets connected');return r}catch(e){setConnection(false,'Not connected');throw e}}
+async function apiGet(action){if(!endpoint)throw new Error('Google Apps Script URL is not configured.');let response;try{response=await fetch(endpoint+(endpoint.includes('?')?'&':'?')+'action='+encodeURIComponent(action),{method:'GET',redirect:'follow',cache:'no-store'})}catch(e){throw new Error('Could not reach the Apps Script web app. Check the /exec URL, deployment access, and browser cross-origin permissions. '+(e&&e.message?e.message:''))}if(!response.ok)throw new Error('Connection test failed (HTTP '+response.status+').');let result;try{result=await response.json()}catch(e){throw new Error('Apps Script did not return JSON. Confirm this is the deployed web-app URL ending in /exec, not the editor URL.')}if(!result.ok)throw new Error(result.error||'Apps Script connection test failed.');return result}
+async function testConnection(){try{let r;try{r=await apiGet('ping')}catch(getError){r=await api('ping')}renderSheetSchema(r);setConnection(true,'Google Sheets connected');return r}catch(e){setConnection(false,'URL saved · not connected');throw e}}
 async function lookup(){
  hideMessage('terminalMessage');const q=digits($('identity').value);if(!q){setMessage('terminalMessage','Enter a membership ID or registered mobile number.',false);return}
  if(busy)return;setBusy(true);
@@ -134,18 +118,12 @@ async function loadProfile(id,name){
  catch(e){setMessage('recordsMessage',e.message,false)}
  finally{setBusy(false)}
 }
+$('adminPanelToggle').addEventListener('click',()=>{const panel=$('adminPanel');const opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));if(opening)panel.scrollIntoView({behavior:'smooth',block:'start'})});
 $('connection').addEventListener('click',()=>{const d=$('connectionSettings');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});$('endpoint').focus()});
-function clearMemberForm(){editingMemberId=null;$('memberNameInput').value='';$('memberMobileInput').value='';$('memberStatusInput').value='active';$('memberExpiryInput').value='';$('saveMember').textContent='Create member';$('memberEditingLabel').textContent='New member · ID assigned by Sheets';hideMessage('memberMessage')}
-function renderMembers(rows){cachedMembers=rows||[];const body=$('membersBody');body.replaceChildren();if(!cachedMembers.length){const tr=document.createElement('tr'),td=rowCell('No members found.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr);return}cachedMembers.forEach(m=>{const tr=document.createElement('tr');tr.append(rowCell(m.membershipId),rowCell(m.name),rowCell(m.mobile||'—'),rowCell(m.storedStatus||m.status),rowCell(m.expiry||'—'));const td=document.createElement('td');const edit=document.createElement('button');edit.className='btn btn-quiet';edit.textContent='Edit';edit.style.padding='6px 9px';edit.style.fontSize='11px';edit.addEventListener('click',()=>{editingMemberId=String(m.membershipId);$('memberNameInput').value=m.name||'';$('memberMobileInput').value=m.mobile||'';$('memberStatusInput').value=(m.storedStatus||m.status||'active').toLowerCase();if(!['active','inactive','expired','suspended'].includes($('memberStatusInput').value))$('memberStatusInput').value='inactive';$('memberExpiryInput').value=m.expiry||'';$('saveMember').textContent='Save changes';$('memberEditingLabel').textContent='Editing member ID '+m.membershipId;$('memberNameInput').focus()});td.appendChild(edit);const archive=document.createElement('button');archive.className='btn btn-quiet';archive.textContent='Archive';archive.style.padding='6px 9px';archive.style.fontSize='11px';archive.style.marginLeft='5px';archive.addEventListener('click',()=>archiveMember(m));td.appendChild(archive);tr.appendChild(td);body.appendChild(tr)})}
-async function pullMembers(){const pin=$('adminPin').value;if(!pin){setMessage('memberMessage','Enter the admin PIN above in the attendance filters first.',false);return}setBusy(true);hideMessage('memberMessage');try{const r=await api('memberList',{adminPin:pin,query:$('memberQuery').value.trim()});renderMembers(r.members||[]);setMessage('memberMessage','Pulled '+(r.members||[]).length+' members from Google Sheets.',true)}catch(e){setMessage('memberMessage',e.message,false)}finally{setBusy(false)}}
-async function saveMember(){const pin=$('adminPin').value;if(!pin){setMessage('memberMessage','Enter the admin PIN above in the attendance filters first.',false);return}const data={adminPin:pin,member:{name:$('memberNameInput').value.trim(),mobile:digits($('memberMobileInput').value),status:$('memberStatusInput').value,expiry:$('memberExpiryInput').value}};if(!data.member.name){setMessage('memberMessage','Enter the member name.',false);return}setBusy(true);hideMessage('memberMessage');try{const r=editingMemberId?await api('memberUpdate',{...data,membershipId:editingMemberId}):await api('memberCreate',data);setMessage('memberMessage',r.message||'Member saved.',true);clearMemberForm();const list=await api('memberList',{adminPin:pin,query:$('memberQuery').value.trim()});renderMembers(list.members||[])}catch(e){setMessage('memberMessage',e.message,false)}finally{setBusy(false)}}
-async function archiveMember(m){const pin=$('adminPin').value;if(!pin){setMessage('memberMessage','Enter the admin PIN above in the attendance filters first.',false);return}if(!confirm('Archive member '+m.name+' (ID '+m.membershipId+')? Their attendance history and ID will be preserved.'))return;setBusy(true);try{const r=await api('memberArchive',{adminPin:pin,membershipId:String(m.membershipId)});setMessage('memberMessage',r.message,true);const list=await api('memberList',{adminPin:pin,query:$('memberQuery').value.trim()});renderMembers(list.members||[])}catch(e){setMessage('memberMessage',e.message,false)}finally{setBusy(false)}}
-$('pullMembers').addEventListener('click',pullMembers);$('saveMember').addEventListener('click',saveMember);$('cancelMemberEdit').addEventListener('click',clearMemberForm);$('memberQuery').addEventListener('keydown',e=>{if(e.key==='Enter')pullMembers()});
-$('memberMobileInput').addEventListener('input',()=>{$('memberMobileInput').value=digits($('memberMobileInput').value)});
 $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
-$('saveEndpoint').addEventListener('click',async()=>{const v=$('endpoint').value.trim();if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(v)){setMessage('terminalMessage','Paste the deployed Google Apps Script Web App URL ending in /exec.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. Column names were fetched from the live members sheet.',true)}catch(e){setMessage('terminalMessage',e.message,false)}finally{setBusy(false)}});
+$('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('terminalMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('terminalMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
 $('searchBtn').addEventListener('click',()=>searchRecords(true));$('refreshBtn').addEventListener('click',()=>searchRecords(true));$('clearFilters').addEventListener('click',()=>{['filterDate','filterMonth','filterTime','filterName','filterIdentity'].forEach(id=>$(id).value='');searchRecords(true)});
-if(endpoint)testConnection().catch(()=>setConnection(false,'Not connected'));else setConnection(false,'Backend not configured');
+if(endpoint)testConnection().catch(e=>{setConnection(false,'URL saved · not connected');console.warn('Apps Script connection test failed:',e)});else setConnection(false,'Backend not configured');
 })();
 </script>
 </body>
