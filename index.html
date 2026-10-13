@@ -84,6 +84,9 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 }
 @media(max-width:680px){
  .shell.sidebar-collapsed{display:block;grid-template-columns:none}
+ .shell.sidebar-collapsed .nav-copy{display:block}
+ .shell.sidebar-collapsed .nav-item{padding:5px 2px;min-height:55px}
+ .shell.sidebar-collapsed .nav-icon{flex:0 0 24px;width:28px;height:24px}
  .shell{display:block;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
  .workspace{padding:13px 12px 25px}
  .sidebar{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;min-height:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:block;overflow:visible;border-right:0;border-top:1px solid #343940;background:rgba(16,17,19,.97);backdrop-filter:blur(16px)}
