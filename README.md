@@ -24,8 +24,8 @@ Responsive attendance terminal with a shared Google Sheets backend and an Admin 
 
 ## Deploy the Apps Script backend
 
-1. Open [Google Apps Script](https://script.google.com/) and create a standalone project.
-2. Replace the editor contents with the full source from [Code.gs](https://github.com/jarvisbyak-pack/Figma-attendance-ui/blob/main/Code.gs). Save.
+1. Open your Google Sheet and choose **Extensions → Apps Script** (or open [Google Apps Script](https://script.google.com/)).
+2. Paste the Apps Script source supplied separately in the conversation into the Apps Script editor and save it. The Apps Script source is intentionally not stored in this GitHub repository.
 3. Open **Project Settings → Script Properties** and add:
    - `SPREADSHEET_ID`: your Google Spreadsheet ID
    - `ADMIN_PIN`: a strong PIN used to authorize member management and attendance history
