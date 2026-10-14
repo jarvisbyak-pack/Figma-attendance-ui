@@ -372,7 +372,7 @@ async function searchRecords(showErrors){
  if(feedViewActive&&!$('adminPin').value.trim()){$('feedState').textContent='Enter the admin PIN to load the live feed.';return}
  if(busy&&showErrors)return;if(recordsRequestInFlight)return;recordsRequestInFlight=true;const data={adminPin:$('adminPin').value,date:$('filterDate').value,month:$('filterMonth').value,time:$('filterTime').value,name:$('filterName').value.trim(),identity:digits($('filterIdentity').value)};
  if(showErrors)setBusy(true);hideMessage('recordsMessage');
- try{await ensureMemberCache();const r=await api('attendanceSearch',data);renderRecords(r.records||[]);$('feedState').textContent='Today's live feed updated at '+new Date().toLocaleTimeString()+' · refreshes every 5 seconds while Live Feed is selected.';if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
+ try{await ensureMemberCache();const r=await api('attendanceSearch',data);renderRecords(r.records||[]);$('feedState').textContent="Today's live feed updated at "+new Date().toLocaleTimeString()+" · refreshes every 5 seconds while Live Feed is selected.";if(showErrors)setMessage('recordsMessage','Records loaded from Google Sheets.',true)}
  catch(e){if(showErrors)setMessage('recordsMessage',e.message,false);else console.warn(e)}
  finally{recordsRequestInFlight=false;if(showErrors)setBusy(false)}
 }
