@@ -38,6 +38,11 @@ test('attendance records include membership expiry and retain all filter fields'
   assert.match(script, /memberCache\.find/);
 });
 
+test('Apps Script accepts both ok and success response envelopes', () => {
+  assert.match(script, /json\.ok===true\|\|json\.success===true/);
+  assert.match(script, /result\.ok===true\|\|result\.success===true/);
+});
+
 test('member directory is connected to the protected memberList action', () => {
   for (const id of ['memberDirectory', 'memberDirectoryPin', 'memberDirectorySearch', 'memberDirectoryRefresh', 'memberDirectoryBody']) {
     assert.match(html, new RegExp('id="' + id + '"'));
