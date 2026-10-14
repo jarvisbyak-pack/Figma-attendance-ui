@@ -43,13 +43,17 @@ test('Apps Script accepts both ok and success response envelopes', () => {
   assert.match(script, /result\.ok===true\|\|result\.success===true/);
 });
 
-test('member directory is connected to the protected memberList action', () => {
-  for (const id of ['memberDirectory', 'memberDirectoryPin', 'memberDirectorySearch', 'memberDirectoryRefresh', 'memberDirectoryBody']) {
+test('member directory opens without an Admin PIN and provides collapsible filters', () => {
+  for (const id of ['memberDirectory', 'memberDirectorySearch', 'memberDirectoryRefresh', 'memberDirectoryBody', 'memberDirectoryFilterToggle', 'memberDirectoryFilters', 'memberDirectoryExpiryFilter', 'memberDirectoryClearFilters']) {
     assert.match(html, new RegExp('id="' + id + '"'));
   }
+  assert.doesNotMatch(html, /id="memberDirectoryPin"/);
+  assert.doesNotMatch(script, /memberDirectoryPin/);
   assert.match(script, /api\('memberList',\{adminPin:pin\}\)/);
   assert.match(script, /function renderMemberDirectory\(/);
   assert.match(script, /function loadMemberDirectory\(/);
+  assert.match(script, /info\.kind===expiryFilter/);
+  assert.match(script, /memberDirectoryFilterToggle.*addEventListener/);
 });
 
 test('responsive rules cover desktop, tablet, mobile and narrow screens', () => {
