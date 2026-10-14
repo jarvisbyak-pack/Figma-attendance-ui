@@ -265,8 +265,8 @@ function withMemberExpiry(r){const found=memberCache.find(m=>memberKey(m)===memb
 function expiryInfo(r){const raw=memberExpiryValue(r);if(!raw)return {label:"Expiry not provided",kind:"unknown",date:"—"};const d=new Date(raw);if(Number.isNaN(d.getTime()))return {label:"Expiry date unavailable",kind:"unknown",date:String(raw)};d.setHours(0,0,0,0);const today=new Date();today.setHours(0,0,0,0);const days=Math.ceil((d-today)/86400000);if(days<=0)return {label:days===0?"Expires today":"Expired "+Math.abs(days)+"d ago",kind:"expired",date:d.toLocaleDateString()};if(days<=5)return {label:days+"d left",kind:"soon",date:d.toLocaleDateString()};return {label:days+"d left",kind:"active",date:d.toLocaleDateString()}}
 function attendanceDateKey(value){
  const raw=String(value==null?'':value).trim();let m;
- if((m=raw.match(/^(\\d{4})[-/](\\d{1,2})[-/](\\d{1,2})$/)))return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
- if((m=raw.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})$/)))return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+ if((m=raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)))return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+ if((m=raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)))return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
  const parsed=Date.parse(raw);if(Number.isNaN(parsed))return '';
  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(parsed));
  const part=type=>parts.find(p=>p.type===type)?.value||'';
