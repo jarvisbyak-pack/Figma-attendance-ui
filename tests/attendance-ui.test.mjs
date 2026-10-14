@@ -20,8 +20,8 @@ test('all statically referenced element IDs exist and are unique', () => {
   assert.deepEqual(missing, [], 'every static $(id) reference must resolve to an HTML element');
 });
 
-test('four attendance views remain wired to the sidebar', () => {
-  for (const view of ['members', 'feed', 'admin', 'filter']) {
+test('five attendance views remain wired to the sidebar', () => {
+  for (const view of ['members', 'clock', 'feed', 'admin', 'filter']) {
     assert.match(html, new RegExp('data-view="' + view + '"'));
   }
   assert.match(script, /document\.querySelectorAll\('\[data-view\]'\)/);
@@ -57,11 +57,24 @@ test('responsive rules cover desktop, tablet, mobile and narrow screens', () => 
   assert.match(html, /@media\(max-width:1100px\) and \(min-width:681px\)/);
   assert.match(html, /@media\(max-width:680px\)/);
   assert.match(html, /@media\(max-width:380px\)/);
-  assert.match(html, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(html, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
   assert.match(html, /env\(safe-area-inset-bottom\)/);
 });
 
 test('live-feed polling is guarded and stopped when the Admin Panel toggle is used', () => {
   assert.ok(script.includes("setInterval(()=>{if(feedViewActive&&endpoint&&$('adminPin').value.trim()&&!busy)searchRecords(false)},5000)"));
   assert.ok(script.includes("$('adminPanelToggle').addEventListener('click',()=>{feedViewActive=false"));
+});
+
+test('Members is a searchable all-fields directory and clock actions live in their own view', () => {
+  assert.match(html, /data-view="clock"/);
+  assert.match(html, /id="clockPanel"/);
+  assert.match(html, /id="connectionMessage"/);
+  assert.match(script, /setMessage\('connectionMessage','URL saved on this device, but connection failed:/);
+  assert.match(html, /id="membersPanel"/);
+  assert.match(script, /JSON\.stringify\(m\|\|\{\}\)\.toLowerCase\(\)\.includes\(query\)/);
+  assert.match(script, /Object\.keys\(m\)\.forEach/);
+  assert.match(script, /__computedExpiryCondition/);
+  assert.match(script, /memberDirectorySearch'\)\.addEventListener\('input'/);
+  assert.match(html, /\.shell\[data-current-view="members"\] \.layout\{display:block/);
 });

@@ -22,6 +22,11 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 .shell:not([data-current-view="members"]) .right-stack{display:block}
 .shell:not([data-current-view="members"]) #adminPanel{display:block}
 .shell[data-current-view="members"] #adminPanel{display:none!important}
+.shell[data-current-view="members"] .layout{display:block;max-width:1500px}
+.shell[data-current-view="clock"] #clockPanel{display:block!important}
+.shell[data-current-view="clock"] #adminPanel{display:none!important}
+.shell[data-current-view="clock"] .right-stack{display:block}
+.shell[data-current-view="clock"] #membersPanel{display:none!important}
 @media(max-width:800px){.shell{padding:15px 12px 30px}.layout{grid-template-columns:1fr}.panel{padding:17px}.topbar{align-items:flex-start}.brand h1{font-size:14px}.status{font-size:10px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.clock{font-size:26px}.actions{gap:7px}.actions .btn{font-size:12px}.stat-grid{gap:6px}.stat{padding:10px}.stat strong{font-size:20px}.brand p{font-size:9px}}
 
@@ -91,11 +96,11 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
  .workspace{padding:13px 12px 25px}
  .sidebar{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;min-height:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:block;overflow:visible;border-right:0;border-top:1px solid #343940;background:rgba(16,17,19,.97);backdrop-filter:blur(16px)}
  .side-brand,.side-section-label,.side-bottom,.side-foot{display:none}
- .side-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ .side-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
  .nav-item{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:55px;padding:5px 2px;border-radius:9px;text-align:center}
  .nav-icon{flex:0 0 24px;width:28px;height:24px;font-size:11px}
  .nav-copy{display:block;min-width:0}
- .nav-title{display:block;font-size:9px;line-height:1.2;white-space:nowrap}
+ .nav-title{display:block;font-size:8px;line-height:1.15;white-space:normal}
  .nav-desc{display:none}
  .topbar{gap:10px;margin-bottom:17px}
  .brand{gap:9px}
@@ -135,7 +140,8 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
   <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar"><span aria-hidden="true">‹</span><span class="sidebar-toggle-copy">Collapse sidebar</span></button>
   <div class="side-section-label">WORKSPACE</div>
   <nav class="side-nav" aria-label="Attendance sections">
-    <button type="button" class="nav-item" data-view="members" aria-current="page"><span class="nav-icon" aria-hidden="true">M</span><span class="nav-copy"><span class="nav-title">Members</span><span class="nav-desc">Member check-in terminal</span></span></button>
+    <button type="button" class="nav-item" data-view="members" aria-current="page"><span class="nav-icon" aria-hidden="true">M</span><span class="nav-copy"><span class="nav-title">Members</span><span class="nav-desc">All client details and search</span></span></button>
+    <button type="button" class="nav-item" data-view="clock"><span class="nav-icon" aria-hidden="true">IN</span><span class="nav-copy"><span class="nav-title">Clock In / Out</span><span class="nav-desc">Record client attendance</span></span></button>
     <button type="button" class="nav-item" data-view="feed"><span class="nav-icon" aria-hidden="true">LF</span><span class="nav-copy"><span class="nav-title">Live Feed</span><span class="nav-desc">Latest attendance records</span></span></button>
     <button type="button" class="nav-item" data-view="admin"><span class="nav-icon" aria-hidden="true">AP</span><span class="nav-copy"><span class="nav-title">Admin Panel</span><span class="nav-desc">Records and member history</span></span></button>
     <button type="button" class="nav-item" data-view="filter"><span class="nav-icon" aria-hidden="true">AF</span><span class="nav-copy"><span class="nav-title">Attendance Filter</span><span class="nav-desc">Search by date, time and ID</span></span></button>
@@ -148,21 +154,10 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <div class="brand"><div class="mark">AK</div><div><h1>AK PACK FITNESS</h1><p>MEMBER ATTENDANCE</p></div></div>
 <button type="button" id="adminPanelToggle" class="btn btn-secondary" aria-expanded="false" aria-controls="adminPanel">Admin Panel</button><button type="button" id="connection" class="status" aria-label="Configure Google Sheets backend"><span class="dot"></span><span id="connectionText">Backend not configured</span><span aria-hidden="true"> · Configure</span></button>
 </header>
+<details class="settings" id="connectionSettings"><summary>Connection settings</summary><div class="settings-content"><label class="field-label" for="endpoint" style="margin:0">Google Apps Script Web App URL</label><input id="endpoint" class="input" type="url" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveEndpoint" class="btn btn-secondary">Save & test connection</button><div class="small">After saving the URL, the app reads the live sheet name and column headers from Google Sheets.</div><div id="sheetSchema" class="member-card" style="display:none"><div class="member-name" style="font-size:14px">Detected Google Sheets columns</div><div id="sheetNameLabel" class="member-meta"></div><div id="sheetColumns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div><div id="sheetMapping" class="small" style="margin-top:10px"></div></div></div></details>
+<div id="connectionMessage" class="message" role="status" aria-live="polite"></div>
 <main class="layout">
 <section class="panel" id="membersPanel">
-<div class="eyebrow">Member terminal</div><h2>Check in. Show up.</h2><p class="sub">Enter your membership ID or registered mobile number.</p>
-<div class="clock" id="clock">--:--:--</div><div class="today" id="today"></div>
-<label class="field-label" for="identity">MEMBERSHIP ID / MOBILE</label>
-<div class="input-wrap"><input id="identity" class="input" type="text" inputmode="none" autocomplete="off" placeholder="Enter ID or mobile" maxlength="16" aria-label="Membership ID or mobile number"><button id="lookupBtn" class="btn btn-primary">Find</button></div>
-<div class="keypad" aria-label="Numeric keypad">
-<button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button>
-<button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button>
-<button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button>
-<button class="key" data-key="clear">Clear</button><button class="key" data-key="0">0</button><button class="key" data-key="back">⌫</button>
-</div>
-<div id="memberCard" class="member-card"><div class="member-name" id="memberName"></div><div class="member-meta" id="memberMeta"></div><span id="memberStatus" class="pill"></span><div class="actions"><button id="clockInBtn" class="btn btn-primary">↗ Clock In</button><button id="clockOutBtn" class="btn btn-secondary">↙ Clock Out</button></div></div>
-<div id="terminalMessage" class="message" role="status" aria-live="polite"></div>
-<details class="settings" id="connectionSettings"><summary>Connection settings</summary><div class="settings-content"><label class="field-label" for="endpoint" style="margin:0">Google Apps Script Web App URL</label><input id="endpoint" class="input" type="url" placeholder="https://script.google.com/macros/s/.../exec"><button id="saveEndpoint" class="btn btn-secondary">Save & test connection</button><div class="small">After saving the URL, the app reads the live sheet name and column headers from Google Sheets.</div><div id="sheetSchema" class="member-card" style="display:none"><div class="member-name" style="font-size:14px">Detected Google Sheets columns</div><div id="sheetNameLabel" class="member-meta"></div><div id="sheetColumns" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div><div id="sheetMapping" class="small" style="margin-top:10px"></div></div></div></details>
 <section class="settings" id="memberDirectory" aria-labelledby="memberDirectoryHeading">
   <div class="section-head"><div><div class="eyebrow">Member records</div><h2 id="memberDirectoryHeading">Member directory</h2><p class="sub" style="margin-bottom:0">Search members and check their membership expiry.</p></div><button type="button" id="memberDirectoryRefresh" class="btn btn-quiet">Load / refresh</button></div>
   <label class="field-label" for="memberDirectoryPin">ADMIN PIN</label>
@@ -172,7 +167,17 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
   <div class="table-wrap"><table class="member-directory-table"><thead><tr><th>Membership ID</th><th>Member</th><th>Mobile</th><th>Status</th><th>Expiry date</th><th>Expiry condition</th></tr></thead><tbody id="memberDirectoryBody"><tr><td colspan="6" class="empty">Member list has not been loaded.</td></tr></tbody></table></div>
 </section>
 </section>
+
 <div class="right-stack">
+<section class="panel hidden" id="clockPanel" aria-label="Clock In and Clock Out">
+<div class="eyebrow">Member terminal</div><h2>Check in. Show up.</h2><p class="sub">Enter a membership ID or registered mobile number.</p>
+<div class="clock" id="clock">--:--:--</div><div class="today" id="today"></div>
+<label class="field-label" for="identity">MEMBERSHIP ID / MOBILE</label>
+<div class="input-wrap"><input id="identity" class="input" type="text" inputmode="none" autocomplete="off" placeholder="Enter ID or mobile" maxlength="16" aria-label="Membership ID or mobile number"><button id="lookupBtn" class="btn btn-primary">Find</button></div>
+<div class="keypad" aria-label="Numeric keypad"><button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button><button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button><button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button><button class="key" data-key="clear">Clear</button><button class="key" data-key="0">0</button><button class="key" data-key="back">⌫</button></div>
+<div id="memberCard" class="member-card"><div class="member-name" id="memberName"></div><div class="member-meta" id="memberMeta"></div><span id="memberStatus" class="pill"></span><div class="actions"><button id="clockInBtn" class="btn btn-primary">Clock In</button><button id="clockOutBtn" class="btn btn-secondary">Clock Out</button></div></div>
+<div id="terminalMessage" class="message" role="status" aria-live="polite"></div>
+</section>
 <section class="panel hidden" id="adminPanel" aria-label="Admin Panel" data-active-view="admin">
 <div class="section-head"><div><div class="eyebrow">Live Feed · Attendance</div><h2 id="adminHeading">Admin overview</h2><p class="sub" style="margin-bottom:0">Latest attendance events with membership expiry status.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div><div id="feedSection" data-section="feed"><div id="feedState" class="small" style="margin-top:10px">Auto-refresh waits for backend connection and admin PIN.</div><div id="liveFeedList" style="display:grid;gap:8px;margin-top:12px"></div></div>
 <div id="adminOverview"><label class="field-label" for="adminPin" style="margin-top:16px">ADMIN PIN</label><input id="adminPin" class="input" type="password" inputmode="numeric" placeholder="Enter admin PIN" aria-label="Admin PIN for records" autocomplete="off"><div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div></div>
@@ -253,14 +258,30 @@ async function fetchMemberRows(pin){
  if(!rows)throw new Error('The memberList action did not return a member array. Check the Apps Script response format.');
  memberCache=rows;memberCachePin=pin;memberCacheLoaded=true;return rows;
 }
-function renderMemberDirectory(rows){
- const body=$('memberDirectoryBody'),query=$('memberDirectorySearch').value.trim().toLowerCase();body.replaceChildren();
- const filtered=(rows||[]).filter(m=>[memberKey(m),m.name||m.memberName||m['Name']||'',m.mobile||m.phone||m.phoneNumber||m['Mobile']||'',m.status||m['Status']||''].some(v=>String(v||'').toLowerCase().includes(query)));
- if(!filtered.length){const tr=document.createElement('tr'),td=rowCell(query?'No members match this search.':'No members were returned.');td.colSpan=6;td.className='empty';tr.appendChild(td);body.appendChild(tr)}
- else filtered.forEach(m=>{const expiry=expiryInfo(m),tr=document.createElement('tr');tr.append(rowCell(memberKey(m)||'—'),rowCell(m.name||m.memberName||m['Name']||'—'),rowCell(m.mobile||m.phone||m.phoneNumber||m['Mobile']||'—'),rowCell(m.status||m['Status']||'Not specified'),rowCell(expiry.date),rowCell(expiry.label));body.appendChild(tr)});
- $('memberDirectoryStatus').textContent='Showing '+filtered.length+' of '+(rows||[]).length+' members'+(memberCacheLoaded?' · Data loaded from Google Sheets.':'');
-}
-async function loadMemberDirectory(){
+function displayMemberValue(value){
+  if(value==null||value==='')return '—';
+  if(typeof value==='object'){try{return JSON.stringify(value)}catch(e){return String(value)}}
+  return String(value);
+ }
+ function renderMemberDirectory(rows){
+  const body=$('memberDirectoryBody'),query=$('memberDirectorySearch').value.trim().toLowerCase();body.replaceChildren();
+  const allRows=Array.isArray(rows)?rows:[];
+  const filtered=allRows.filter(m=>JSON.stringify(m||{}).toLowerCase().includes(query)||[expiryInfo(m).date,expiryInfo(m).label].some(v=>String(v||'').toLowerCase().includes(query)));
+  const preferred=['Membership ID','membershipId','membershipID','memberId','id','Name','name','memberName','Mobile','mobile','phone','phoneNumber','Status','status','Expiry Date','expiryDate','expiry','Valid Till','validTill'];
+  const keys=[],seen=new Set();
+  preferred.forEach(k=>{if(allRows.some(m=>Object.prototype.hasOwnProperty.call(m||{},k))&&!seen.has(k)){seen.add(k);keys.push(k)}});
+  allRows.forEach(m=>{if(m&&typeof m==='object')Object.keys(m).forEach(k=>{if(!seen.has(k)){seen.add(k);keys.push(k)}})});
+  const labelFor=k=>({'membershipId':'Membership ID','membershipID':'Membership ID','memberId':'Member ID','id':'ID','memberName':'Name','name':'Name','mobile':'Mobile','phone':'Phone','phoneNumber':'Phone','status':'Status','expiryDate':'Expiry Date','expiry':'Expiry Date','validTill':'Valid Till'}[k]||k.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()));
+  if(!keys.some(k=>['Expiry Date','expiryDate','expiry','expiry_date','Valid Till','validTill','valid_till'].includes(k)))keys.push('__computedExpiryDate');
+  if(!keys.some(k=>['Expiry condition','expiryCondition','expiryStatus'].includes(k)))keys.push('__computedExpiryCondition');
+  const table=body.closest('table'),head=table.querySelector('thead');head.replaceChildren();const headerRow=document.createElement('tr');
+  const columns=keys.length?keys:['Membership ID','Name','Mobile','Status'];
+  columns.forEach(k=>{const th=document.createElement('th');th.textContent=k==='__computedExpiryDate'?'Expiry date':k==='__computedExpiryCondition'?'Expiry condition':labelFor(k);headerRow.appendChild(th)});head.appendChild(headerRow);
+  if(!filtered.length){const tr=document.createElement('tr'),td=rowCell(query?'No clients match any of the available client details.':'No clients were returned.');td.colSpan=columns.length;td.className='empty';tr.appendChild(td);body.appendChild(tr)}
+  else filtered.forEach(m=>{const tr=document.createElement('tr');columns.forEach(k=>{const value=k==='__computedExpiryDate'?expiryInfo(m).date:k==='__computedExpiryCondition'?expiryInfo(m).label:(Object.prototype.hasOwnProperty.call(m||{},k)?displayMemberValue(m[k]):'—');const td=rowCell(value);td.title=td.textContent;tr.appendChild(td)});body.appendChild(tr)});
+  $('memberDirectoryStatus').textContent='Showing '+filtered.length+' of '+allRows.length+' clients'+(memberCacheLoaded?' · Data loaded from Google Sheets.':'');
+ }
+ async function loadMemberDirectory(){
  const pin=$('memberDirectoryPin').value.trim()||$('adminPin').value.trim();
  if(!pin){$('memberDirectoryStatus').textContent='Enter the admin PIN to load the member directory.';return}
  $('memberDirectoryPin').value=pin;$('adminPin').value=pin;
@@ -337,15 +358,20 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  document.querySelector('.shell').dataset.currentView=view;
  $('adminHeading').textContent=view==='feed'?'Live attendance feed':view==='filter'?'Attendance records filter':'Admin overview';
  document.querySelectorAll('[data-view]').forEach(item=>{if(item===button)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});
- if(view==='members'){
+   $('clockPanel').classList.toggle('hidden',view!=='clock');
+if(view==='members'){
   feedViewActive=false;
   if($('memberDirectoryPin').value.trim()||$('adminPin').value.trim())loadMemberDirectory();
   $('adminPanel').dataset.activeView='admin';
   $('adminPanel').classList.add('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','false');
-
- }else if(view==='admin'){
-  feedViewActive=false;
+  }else if(view==='clock'){
+   feedViewActive=false;
+   $('adminPanel').dataset.activeView='admin';
+   $('adminPanel').classList.add('hidden');
+   $('adminPanelToggle').setAttribute('aria-expanded','false');
+  }else if(view==='admin'){
+   feedViewActive=false;
   $('adminPanel').dataset.activeView='admin';
   $('adminPanel').classList.remove('hidden');
   $('adminPanelToggle').setAttribute('aria-expanded','true');
@@ -367,12 +393,12 @@ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener
  }
 }));
 
-$('adminPanelToggle').addEventListener('click',()=>{feedViewActive=false;const panel=$('adminPanel');const opening=panel.classList.contains('hidden');const view=opening?'admin':'members';document.querySelector('.shell').dataset.currentView=view;panel.dataset.activeView='admin';$('adminHeading').textContent='Admin overview';panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===view)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});});
+$('adminPanelToggle').addEventListener('click',()=>{feedViewActive=false;const panel=$('adminPanel');const opening=panel.classList.contains('hidden');const view=opening?'admin':'members';document.querySelector('.shell').dataset.currentView=view;$('clockPanel').classList.add('hidden');panel.dataset.activeView='admin';$('adminHeading').textContent='Admin overview';panel.classList.toggle('hidden',!opening);$('adminPanelToggle').setAttribute('aria-expanded',String(opening));document.querySelectorAll('[data-view]').forEach(item=>{if(item.dataset.view===view)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});});
 $('connection').addEventListener('click',()=>{const d=$('connectionSettings');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});$('endpoint').focus()});
 $('lookupBtn').addEventListener('click',lookup);$('identity').addEventListener('keydown',e=>{if(e.key==='Enter')lookup()});$('clockInBtn').addEventListener('click',()=>attendance('clockIn'));$('clockOutBtn').addEventListener('click',()=>attendance('clockOut'));
-$('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('terminalMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('terminalMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('terminalMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
+$('saveEndpoint').addEventListener('click',async()=>{let v=$('endpoint').value.trim();try{const u=new URL(v);if(u.protocol!=='https:'||u.hostname!=='script.google.com'||!/^\/macros\/s\/[^/]+\/exec\/?$/.test(u.pathname))throw new Error('Paste the deployed Google Apps Script Web App URL ending in /exec.');u.pathname=u.pathname.replace(/\/$/,'');u.search='';u.hash='';v=u.toString()}catch(e){setMessage('connectionMessage',e.message||'Paste a valid Apps Script /exec URL.',false);return}endpoint=v;localStorage.setItem('akpack_apps_script_url',endpoint);setConnection(false,'Testing connection…');setBusy(true);try{await testConnection();setMessage('connectionMessage','Connected to Google Sheets. The live spreadsheet and members columns were fetched.',true)}catch(e){setConnection(false,'URL saved · not connected');setMessage('connectionMessage','URL saved on this device, but connection failed: '+e.message,false)}finally{setBusy(false)}});
 $('searchBtn').addEventListener('click',()=>searchRecords(true));$('refreshBtn').addEventListener('click',()=>searchRecords(true));$('clearFilters').addEventListener('click',()=>{['filterDate','filterMonth','filterTime','filterName','filterIdentity'].forEach(id=>$(id).value='');searchRecords(true)});
-$('memberDirectoryRefresh').addEventListener('click',loadMemberDirectory);$('memberDirectorySearchBtn').addEventListener('click',()=>renderMemberDirectory(memberCache));$('memberDirectorySearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderMemberDirectory(memberCache)});$('memberDirectoryPin').addEventListener('keydown',e=>{if(e.key==='Enter')loadMemberDirectory()});$('memberDirectoryPin').addEventListener('input',()=>{if($('memberDirectoryPin').value.trim()!==memberCachePin){memberCacheLoaded=false;memberCache=[]}});
+$('memberDirectoryRefresh').addEventListener('click',loadMemberDirectory);$('memberDirectorySearchBtn').addEventListener('click',()=>renderMemberDirectory(memberCache));$('memberDirectorySearch').addEventListener('input',()=>renderMemberDirectory(memberCache));$('memberDirectorySearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderMemberDirectory(memberCache)});$('memberDirectoryPin').addEventListener('keydown',e=>{if(e.key==='Enter')loadMemberDirectory()});$('memberDirectoryPin').addEventListener('input',()=>{if($('memberDirectoryPin').value.trim()!==memberCachePin){memberCacheLoaded=false;memberCache=[];$('memberDirectoryBody').replaceChildren();const tr=document.createElement('tr'),td=rowCell('Load the directory using the current admin PIN.');td.colSpan=6;td.className='empty';tr.appendChild(td);$('memberDirectoryBody').appendChild(tr);$('memberDirectoryStatus').textContent='Admin PIN changed. Reload the member directory.'}});
 if(endpoint)testConnection().catch(e=>{setConnection(false,'URL saved · not connected');console.warn('Apps Script connection test failed:',e)});else setConnection(false,'Backend not configured');
 setInterval(()=>{if(feedViewActive&&endpoint&&$('adminPin').value.trim()&&!busy)searchRecords(false)},5000);
 })();
