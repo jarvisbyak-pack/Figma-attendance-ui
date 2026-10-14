@@ -190,7 +190,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 </section>
 <section class="panel hidden" id="adminPanel" aria-label="Admin Panel" data-active-view="admin">
 <div class="section-head"><div><div class="eyebrow">Live Feed · Attendance</div><h2 id="adminHeading">Admin overview</h2><p class="sub" style="margin-bottom:0">Latest attendance events with membership expiry status.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div><div id="feedSection" data-section="feed"><div id="feedState" class="small" style="margin-top:10px">Auto-refresh waits for backend connection and admin PIN.</div><div id="liveFeedList" style="display:grid;gap:8px;margin-top:12px"></div></div>
-<div id="adminOverview"><label class="field-label" for="adminPin" style="margin-top:16px">ADMIN PIN</label><input id="adminPin" class="input" type="password" inputmode="numeric" placeholder="Enter admin PIN" aria-label="Admin PIN for records" autocomplete="off"><div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div></div>
+<div id="adminOverview"><label class="field-label" for="adminPin" style="margin-top:16px">ADMIN ACCESS PIN</label><input id="adminPin" class="input" type="password" inputmode="numeric" value="12345" placeholder="Enter admin PIN" aria-label="Admin PIN for records and member directory" autocomplete="off"><div class="small">Temporary PIN: 12345. Change this in the app and matching Apps Script configuration when ready.</div><div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div></div>
 <div id="filterSection" data-section="filter"><div class="filters">
 <input id="filterDate" class="input" type="date" aria-label="Filter by date">
 <input id="filterMonth" class="input" type="month" aria-label="Filter by month">
@@ -293,11 +293,12 @@ function displayMemberValue(value){
   $('memberDirectoryStatus').textContent='Showing '+filtered.length+' of '+allRows.length+' clients'+(memberCacheLoaded?' · Data loaded from Google Sheets.':'');
  }
  async function loadMemberDirectory(){
- const pin='';
+ const pin=$('adminPin').value.trim();
+ if(!pin){$('memberDirectoryStatus').textContent='Open Admin Panel and enter the admin PIN to load member details.';return}
  $('memberDirectoryStatus').textContent='Loading all member details from Google Sheets…';
  $('memberDirectoryRefresh').disabled=true;
  try{const rows=await fetchMemberRows(pin);renderMemberDirectory(rows)}
- catch(e){$('memberDirectoryStatus').textContent='Could not load members: '+e.message}
+ catch(e){$('memberDirectoryStatus').textContent='Could not load members: '+e.message+' Check that this PIN matches the Apps Script admin PIN.'}
  finally{$('memberDirectoryRefresh').disabled=false}
 }
 async function ensureMemberCache(){
