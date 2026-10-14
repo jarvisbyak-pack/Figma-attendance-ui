@@ -303,23 +303,18 @@ function displayMemberValue(value){
   const allRows=Array.isArray(rows)?rows:[];
   const expiryFilter=$('memberDirectoryExpiryFilter').value;
   const filtered=allRows.filter(m=>{const info=expiryInfo(m);const textMatch=JSON.stringify(m||{}).toLowerCase().includes(query)||[info.date,info.label].some(v=>String(v||'').toLowerCase().includes(query));return textMatch&&(expiryFilter==='all'||info.kind===expiryFilter)});
-  const groups=[
-   {label:'Membership ID',aliases:['Membership ID','membershipId','membershipID','memberId','memberID','id']},
-   {label:'Name',aliases:['Name','name','memberName','Member Name','fullName','full_name']},
-   {label:'Mobile',aliases:['Mobile','mobile','phone','phoneNumber','mobileNumber','Mobile Number']},
-   {label:'Status',aliases:['Status','status','membershipStatus','memberStatus']},
-   {label:'Expiry date',aliases:['Expiry Date','expiryDate','expiry','expiry_date','membershipExpiry','validTill','valid_till','Valid Till','expirationDate']}
+  const columns=[
+   {label:'Membership ID',value:m=>memberKey(m)||'—'},
+   {label:'Name',value:m=>m.name||m.Name||m.memberName||m['Member Name']||m.fullName||m.full_name||'—'},
+   {label:'Mobile',value:m=>m.mobile||m.Mobile||m.phone||m.phoneNumber||m.mobileNumber||m['Mobile Number']||'—'},
+   {label:'Status',value:m=>m.status||m.Status||m.membershipStatus||m.memberStatus||'—'},
+   {label:'Expiry date',value:m=>expiryInfo(m).date},
+   {label:'Expiry condition',value:m=>expiryInfo(m).label}
   ];
-  const aliasSet=new Set(groups.flatMap(g=>g.aliases));
-  const columns=groups.map(g=>({label:g.label,key:g.aliases.find(k=>allRows.some(m=>m&&Object.prototype.hasOwnProperty.call(m,k)))||null,group:g.label}));
-  const extraKeys=[],seenExtra=new Set();
-  allRows.forEach(m=>{if(m&&typeof m==='object')Object.keys(m).forEach(k=>{if(!aliasSet.has(k)&&!seenExtra.has(k)){seenExtra.add(k);extraKeys.push(k)}})});
-  extraKeys.forEach(k=>columns.push({label:k.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase()),key:k,group:'extra'}));
-  columns.push({label:'Expiry condition',key:null,group:'computed'});
   const table=body.closest('table'),head=table.querySelector('thead');head.replaceChildren();const headerRow=document.createElement('tr');
   columns.forEach(c=>{const th=document.createElement('th');th.textContent=c.label;headerRow.appendChild(th)});head.appendChild(headerRow);
   if(!filtered.length){const tr=document.createElement('tr'),td=rowCell(query?'No clients match any of the available client details.':'No clients were returned.');td.colSpan=columns.length;td.className='empty';tr.appendChild(td);body.appendChild(tr)}
-  else filtered.forEach(m=>{const tr=document.createElement('tr');columns.forEach(c=>{let value='—';if(c.group==='computed')value=expiryInfo(m).label;else if(c.group==='Membership ID')value=memberKey(m)||'—';else if(c.group==='Name')value=m.name||m.Name||m.memberName||m['Member Name']||m.fullName||m.full_name||'—';else if(c.group==='Mobile')value=m.mobile||m.Mobile||m.phone||m.phoneNumber||m.mobileNumber||m['Mobile Number']||'—';else if(c.group==='Status')value=m.status||m.Status||m.membershipStatus||m.memberStatus||'—';else if(c.group==='Expiry date')value=expiryInfo(m).date;else if(c.key&&Object.prototype.hasOwnProperty.call(m,c.key))value=displayMemberValue(m[c.key]);const td=rowCell(value);td.title=td.textContent;tr.appendChild(td)});body.appendChild(tr)});
+  else filtered.forEach(m=>{const tr=document.createElement('tr');columns.forEach(c=>{const td=rowCell(displayMemberValue(c.value(m)));td.title=td.textContent;tr.appendChild(td)});body.appendChild(tr)});
   $('memberDirectoryStatus').textContent='Showing '+filtered.length+' of '+allRows.length+' clients'+(memberCacheLoaded?' · Data loaded from Google Sheets.':'');
  }
  async function loadMemberDirectory(){
