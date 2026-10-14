@@ -17,10 +17,10 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 .member-directory-controls .input{min-width:0}
 @media(max-width:700px){.member-directory-controls{grid-template-columns:1fr 1fr}.member-directory-controls input[type=search]{grid-column:1/-1}.member-directory-actions .btn{padding:10px 11px;font-size:12px}}
 #adminPanel [data-section],#adminPanel #adminOverview,#adminPanel #profile{display:none}
-#adminPanel[data-active-view="feed"] [data-section="feed"],#adminPanel[data-active-view="filter"] [data-section="filter"],#adminPanel[data-active-view="admin"] #adminOverview,#adminPanel[data-active-view="admin"] #profile{display:block}
+#adminPanel[data-active-view="filter"] [data-section="filter"],#adminPanel[data-active-view="admin"] #adminOverview,#adminPanel[data-active-view="admin"] #profile{display:block}
 #adminPanel[data-active-view="admin"] #adminOverview .stat-grid{margin-top:18px}
 #adminPanel[data-active-view="filter"] [data-section="filter"] .filters{margin-top:16px}
-#adminPanel[data-active-view="feed"] .section-head h2{font-size:19px}
+.shell[data-current-view="feed"] #liveFeedPanel{display:block!important}.shell[data-current-view="feed"] #adminPanel{display:none!important}.shell:not([data-current-view="feed"]) #liveFeedPanel{display:none!important}
 #identity{caret-color:transparent;touch-action:manipulation}
 .right-stack>.panel:not(#adminPanel){display:none}
 .shell[data-current-view="members"] .right-stack{display:none}
@@ -188,8 +188,11 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 <div id="memberCard" class="member-card"><div class="member-name" id="memberName"></div><div class="member-meta" id="memberMeta"></div><span id="memberStatus" class="pill"></span><div class="actions"><button id="clockInBtn" class="btn btn-primary">Clock In</button><button id="clockOutBtn" class="btn btn-secondary">Clock Out</button></div></div>
 <div id="terminalMessage" class="message" role="status" aria-live="polite"></div>
 </section>
+<section class="panel hidden" id="liveFeedPanel" aria-label="Live Feed">
+<div class="section-head"><div><div class="eyebrow">Live attendance</div><h2>Client clock-in / clock-out</h2><p class="sub" style="margin-bottom:0">Only client attendance activity appears here, including membership ID and expiry status.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh feed</button></div><div id="feedState" class="small" style="margin-top:10px">Waiting for attendance records from Google Sheets.</div><div id="liveFeedList" style="display:grid;gap:8px;margin-top:12px"></div>
+</section>
 <section class="panel hidden" id="adminPanel" aria-label="Admin Panel" data-active-view="admin">
-<div class="section-head"><div><div class="eyebrow">Live Feed · Attendance</div><h2 id="adminHeading">Admin overview</h2><p class="sub" style="margin-bottom:0">Latest attendance events with membership expiry status.</p></div><button id="refreshBtn" class="btn btn-quiet">Refresh</button></div><div id="feedSection" data-section="feed"><div id="feedState" class="small" style="margin-top:10px">Auto-refresh waits for backend connection and admin PIN.</div><div id="liveFeedList" style="display:grid;gap:8px;margin-top:12px"></div></div>
+<div class="section-head"><div><div class="eyebrow">Administration</div><h2 id="adminHeading">Admin overview</h2><p class="sub" style="margin-bottom:0">Manage protected records, filters and member attendance history.</p></div></div>
 <div id="adminOverview"><label class="field-label" for="adminPin" style="margin-top:16px">ADMIN ACCESS PIN</label><input id="adminPin" class="input" type="password" inputmode="numeric" value="12345" placeholder="Enter admin PIN" aria-label="Admin PIN for records and member directory" autocomplete="off"><div class="small">Temporary PIN: 12345. Change this in the app and matching Apps Script configuration when ready.</div><div class="stat-grid"><div class="stat"><span>Records found</span><strong id="recordsCount">—</strong></div><div class="stat"><span>Clocked in</span><strong id="activeCount">—</strong></div><div class="stat"><span>Selected date</span><strong id="selectedDate" style="font-size:13px;margin-top:10px">All</strong></div></div></div>
 <div id="filterSection" data-section="filter"><div class="filters">
 <input id="filterDate" class="input" type="date" aria-label="Filter by date">
@@ -366,9 +369,10 @@ sidebarToggle.addEventListener('click',()=>{
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
  const view=button.dataset.view;
  document.querySelector('.shell').dataset.currentView=view;
- $('adminHeading').textContent=view==='feed'?'Live attendance feed':view==='filter'?'Attendance records filter':'Admin overview';
+ $('adminHeading').textContent=view==='filter'?'Attendance records filter':'Admin overview';
  document.querySelectorAll('[data-view]').forEach(item=>{if(item===button)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current')});
    $('clockPanel').classList.toggle('hidden',view!=='clock');
+   $('liveFeedPanel').classList.toggle('hidden',view!=='feed');
 if(view==='members'){
   feedViewActive=false;
   if(endpoint&&!memberCacheLoaded)loadMemberDirectory();
@@ -394,12 +398,12 @@ if(view==='members'){
 
  }else if(view==='feed'){
   feedViewActive=true;
-  $('adminPanel').dataset.activeView='feed';
-  $('adminPanel').classList.remove('hidden');
-  $('adminPanelToggle').setAttribute('aria-expanded','true');
+  $('adminPanel').dataset.activeView='admin';
+  $('adminPanel').classList.add('hidden');
+  $('adminPanelToggle').setAttribute('aria-expanded','false');
 
   if(endpoint && $('adminPin').value.trim()) searchRecords(true);
-  else setMessage('recordsMessage','Open Admin Panel, enter your admin PIN, then refresh records to view the latest attendance feed.',false);
+  else $('feedState').textContent='Connect Google Sheets and ensure the admin PIN is configured to load the live feed.';
  }
 }));
 
