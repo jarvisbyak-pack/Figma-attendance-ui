@@ -159,6 +159,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
   <div class="side-bottom"><strong>Google Sheets backend</strong><p>Shared attendance records across your connected devices.</p></div>
   <div class="side-foot"><div class="side-avatar">AK</div><div class="side-foot-copy"><div class="side-user">AK PACK Admin</div><div class="side-role">Administrator</div></div></div>
 </aside>
+<div id="photoConsentModal" class="expiry-modal hidden" role="dialog" aria-modal="true" aria-labelledby="photoConsentTitle"><div class="expiry-dialog" style="border-color:#493322;background:linear-gradient(150deg,#211b16,#121315)"><div class="eyebrow">Attendance verification</div><h2 id="photoConsentTitle">Photo required for clock-in</h2><p>AK PACK FITNESS takes one photo when you clock in to verify attendance. The photo is saved securely in the gym\u2019s Google Drive and linked to your attendance record. It is not shown on this screen; authorised administrators can access it. Continue only if you agree.</p><div class="actions"><button type="button" id="photoConsentCancel" class="btn btn-quiet">Cancel</button><button type="button" id="photoConsentContinue" class="btn btn-primary">Agree &amp; continue</button></div></div></div>
 <div id="expiryModal" class="expiry-modal hidden" role="dialog" aria-modal="true" aria-labelledby="expiryModalTitle"><div id="expiryDialog" class="expiry-dialog"><div class="eyebrow">Membership reminder</div><h2 id="expiryModalTitle">Membership expiry alert</h2><p id="expiryModalMessage"></p><div id="expiryModalDate" class="expiry-date"></div><p>Attendance access remains available. Please inform the member and arrange renewal if needed.</p><div class="actions"><button type="button" id="expiryModalContinue" class="btn btn-primary">Continue to attendance</button></div></div></div>
 <div class="workspace">
 <header class="topbar">
@@ -205,7 +206,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1180px;m
 
 </div>
 <div style="display:flex;gap:8px;margin-top:10px"><button id="searchBtn" class="btn btn-primary">Search records</button><button id="clearFilters" class="btn btn-quiet">Clear filters</button></div>
-<div class="table-wrap"><table><thead><tr><th>Date</th><th>Member</th><th>ID</th><th>Clock in</th><th>Clock out</th><th>Attendance status</th><th>Membership expiry</th></tr></thead><tbody id="recordsBody"><tr><td colspan="7" class="empty">Configure the backend, then search records.</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Member</th><th>ID</th><th>Clock in</th><th>Clock out</th><th>Attendance status</th><th>Membership expiry</th><th>Photo</th></tr></thead><tbody id="recordsBody"><tr><td colspan="8" class="empty">Configure the backend, then search records.</td></tr></tbody></table></div>
 <div id="recordsMessage" class="message" role="status" aria-live="polite"></div></div>
 <div id="profile" class="profile"><h3 id="profileTitle">Member profile</h3><div id="profileMeta" class="small"></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Clock in</th><th>Clock out</th><th>Duration</th><th>Status</th></tr></thead><tbody id="profileBody"></tbody></table></div></div>
 </section>
@@ -256,11 +257,51 @@ function renderMember(showExpiryAlert=true){if(!member)return;$('memberCard').st
 function showExpiryPopup(expiry){const dialog=$('expiryDialog');dialog.classList.toggle('soon',expiry.kind==='soon');$('expiryModalTitle').textContent=expiry.kind==='expired'?'Membership Expired':'Membership Expiring Soon';$('expiryModalMessage').textContent=expiry.kind==='expired'?'This member’s membership has expired. Attendance access is still available. Please advise the member about renewal.':'This member’s membership is nearing its expiry date. Please remind them to renew.';$('expiryModalDate').textContent='Expiry date: '+expiry.date+' · '+expiry.label;$('expiryModal').classList.remove('hidden');$('expiryModalContinue').focus()}
 function closeExpiryPopup(){$('expiryModal').classList.add('hidden')}
 $('expiryModalContinue').addEventListener('click',closeExpiryPopup);$('expiryModal').addEventListener('click',e=>{if(e.target===$('expiryModal'))closeExpiryPopup()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('expiryModal').classList.contains('hidden'))closeExpiryPopup()});
+async function captureAttendancePhoto(){
+ const modal=$('photoConsentModal');
+ modal.classList.remove('hidden');
+ return await new Promise(resolve=>{
+  let settled=false;
+  const finish=value=>{if(settled)return;settled=true;modal.classList.add('hidden');$('photoConsentCancel').removeEventListener('click',cancel);$('photoConsentContinue').removeEventListener('click',agree);resolve(value)};
+  const cancel=()=>finish(null);
+  const agree=async()=>{
+   $('photoConsentContinue').disabled=true;
+   let stream;
+   try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('Camera capture requires HTTPS and a browser with camera support.');
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    const video=document.createElement('video');video.muted=true;video.playsInline=true;video.srcObject=stream;
+    await video.play();
+    await new Promise(r=>setTimeout(r,350));
+    const canvas=document.createElement('canvas');
+    const scale=Math.min(1,640/(video.videoWidth||640));
+    canvas.width=Math.max(1,Math.round((video.videoWidth||640)*scale));
+    canvas.height=Math.max(1,Math.round((video.videoHeight||480)*scale));
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    const dataUrl=canvas.toDataURL('image/jpeg',0.65);
+    finish({photoBase64:dataUrl.split(',')[1],photoMimeType:'image/jpeg'});
+   }catch(e){finish({error:e.message||'Camera permission is required for clock-in.'})}
+   finally{if(stream)stream.getTracks().forEach(t=>t.stop());$('photoConsentContinue').disabled=false}
+  };
+  $('photoConsentCancel').addEventListener('click',cancel);
+  $('photoConsentContinue').addEventListener('click',agree);
+ });
+}
 async function attendance(action){
  if(!member){setMessage('terminalMessage','Find a member before recording attendance.',false);return}if(busy)return;
  setBusy(true);hideMessage('terminalMessage');
- try{const r=await api(action,{membershipId:String(member.membershipId)});setMessage('terminalMessage',r.message|| (action==='clockIn'?'Clock-in recorded.':'Clock-out recorded.'),true);if(r.member)member=r.member;renderMember(false);await searchRecords(false)}
- catch(e){setMessage('terminalMessage',e.message,false)}
+ try{
+  let payload={membershipId:String(member.membershipId)};
+  if(action==='clockIn'){
+   const photo=await captureAttendancePhoto();
+   if(!photo){setMessage('terminalMessage','Clock-in cancelled. No photo was taken and no attendance was recorded.',false);return}
+   if(photo.error)throw new Error(photo.error);
+   payload=Object.assign(payload,photo);
+  }
+  const r=await api(action,payload);
+  setMessage('terminalMessage',r.message|| (action==='clockIn'?'Clock-in recorded.':'Clock-out recorded.'),true);
+  if(r.member)member=r.member;renderMember(false);await searchRecords(false)
+ }catch(e){setMessage('terminalMessage',e.message,false)}
  finally{setBusy(false)}
 }
 function rowCell(text){const td=document.createElement('td');td.textContent=text==null?'':String(text);return td}
@@ -292,7 +333,7 @@ function renderLiveFeed(rows){
  if(!events.length){const empty=document.createElement('div');empty.className='empty';empty.textContent="No clock-in or clock-out events recorded today.";host.appendChild(empty);return}
  events.slice(0,60).forEach(e=>{const card=document.createElement('article');card.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:13px;border:1px solid #2b3035;border-radius:12px;background:#111315';const main=document.createElement('div');main.style.cssText='min-width:0';const name=document.createElement('div');name.style.cssText='font-weight:800;font-size:13px';name.textContent=e.r.name||'Member';const meta=document.createElement('div');meta.style.cssText='color:#9ba1a8;font-size:11px;margin-top:4px';meta.textContent='ID '+(e.r.membershipId||'—')+' · '+(e.r.date||'')+' '+e.time;const expiry=document.createElement('div');expiry.style.cssText='color:#b9bec4;font-size:11px;margin-top:5px';expiry.textContent='Expiry: '+e.expiry.date+' · '+e.expiry.label;main.append(name,meta,expiry);const badges=document.createElement('div');badges.style.cssText='display:grid;justify-items:end;gap:6px';const event=document.createElement('span');event.style.cssText='font-size:10px;font-weight:800;padding:5px 8px;border-radius:99px;background:'+(e.type==='Check In'?'#183b2a':'#202b3a')+';color:'+(e.type==='Check In'?'#69e3a0':'#9cc8ff');event.textContent=e.type;const status=document.createElement('span');const colors={expired:['#45191c','#ff747b'],soon:['#492d0b','#ffb02e'],active:['#123d2a','#38d98a'],unknown:['#292d32','#b9bec4']};const palette=colors[e.expiry.kind];status.style.cssText='font-size:10px;font-weight:800;padding:5px 8px;border-radius:99px;background:'+palette[0]+';color:'+palette[1];status.textContent=e.expiry.kind==='expired'?'EXPIRED':e.expiry.kind==='soon'?'EXPIRING SOON':e.expiry.kind==='active'?'ACTIVE':'NO EXPIRY DATA';badges.append(event,status);card.append(main,badges);host.appendChild(card)});
 }
-function renderRecords(rows){const displayRows=(rows||[]).map(withMemberExpiry);renderLiveFeed(displayRows);const body=$('recordsBody');body.replaceChildren();if(!displayRows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=7;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else displayRows.forEach(r=>{const tr=document.createElement('tr'),expiry=expiryInfo(r);tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status),rowCell(expiry.date+' · '+expiry.label));tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=displayRows.length;$('activeCount').textContent=displayRows.filter(r=>!r.clockOut||String(r.clockOut).trim()==='—').length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
+function renderRecords(rows){const displayRows=(rows||[]).map(withMemberExpiry);renderLiveFeed(displayRows);const body=$('recordsBody');body.replaceChildren();if(!displayRows.length){const tr=document.createElement('tr'),td=rowCell('No attendance records match these filters.');td.colSpan=8;td.className='empty';tr.appendChild(td);body.appendChild(tr)}else displayRows.forEach(r=>{const tr=document.createElement('tr'),expiry=expiryInfo(r);tr.append(rowCell(r.date),rowCell(r.name),rowCell(r.membershipId),rowCell(r.clockIn),rowCell(r.clockOut||'—'),rowCell(r.status),rowCell(expiry.date+' · '+expiry.label));const photoCell=document.createElement('td');if(r.photoUrl){const link=document.createElement('a');link.href=r.photoUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open photo';link.style.color='var(--orange2)';link.addEventListener('click',e=>e.stopPropagation());photoCell.appendChild(link)}else photoCell.textContent='—';tr.appendChild(photoCell);tr.title='Open this member profile';tr.style.cursor='pointer';tr.addEventListener('click',()=>loadProfile(r.membershipId,r.name));body.appendChild(tr)});$('recordsCount').textContent=displayRows.length;$('activeCount').textContent=displayRows.filter(r=>!r.clockOut||String(r.clockOut).trim()==='—').length;$('selectedDate').textContent=$('filterDate').value||$('filterMonth').value||'All'}
 async function fetchMemberRows(pin){
  const response=await api('memberList',{adminPin:pin});
  const rows=Array.isArray(response.members)?response.members:Array.isArray(response.memberList)?response.memberList:Array.isArray(response.records)?response.records:Array.isArray(response.data)?response.data:null;
