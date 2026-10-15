@@ -77,8 +77,21 @@ test('Members is a searchable all-fields directory and clock actions live in the
   assert.match(script, /setMessage\('connectionMessage','URL saved on this device, but connection failed:/);
   assert.match(html, /id="membersPanel"/);
   assert.match(script, /JSON\.stringify\(m\|\|\{\}\)\.toLowerCase\(\)\.includes\(query\)/);
-  assert.match(script, /Object\.keys\(m\)\.forEach/);
+  assert.match(script, /JSON\\.stringify\\(m\\|\\|\\{\\}\\)\\.toLowerCase\\(\\)\\.includes\\(query\\)/);
   assert.match(script, /__computedExpiryCondition/);
   assert.match(script, /memberDirectorySearch'\)\.addEventListener\('input'/);
   assert.match(html, /\.shell\[data-current-view="members"\] \.layout\{display:block/);
+});
+
+test('clock-in photo capture requires notice and sends a compressed photo to the backend', () => {
+  assert.match(html, /id="photoConsentModal"/);
+  assert.match(html, /Photo required for clock-in/);
+  assert.match(html, /takes one photo when you clock in/i);
+  assert.match(script, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(script, /canvas\.toDataURL\('image\/jpeg',0\.65\)/);
+  assert.match(script, /payload=Object\.assign\(payload,photo\)/);
+  assert.match(script, /photoBase64/);
+  assert.match(script, /photoMimeType/);
+  assert.match(html, /<th>Photo<\/th>/);
+  assert.match(script, /link\.rel='noopener noreferrer'/);
 });
