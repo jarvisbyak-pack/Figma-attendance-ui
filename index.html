@@ -270,6 +270,7 @@ async function captureAttendancePhoto(){
    try{
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('Camera capture requires HTTPS and a browser with camera support.');
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    if(settled)return;
     const video=document.createElement('video');video.muted=true;video.playsInline=true;video.srcObject=stream;
     await video.play();
     await new Promise(r=>setTimeout(r,350));
