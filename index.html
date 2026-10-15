@@ -299,6 +299,7 @@ async function attendance(action){
    payload=Object.assign(payload,photo);
   }
   const r=await api(action,payload);
+  if(action==='clockIn'&&!r.photoUrl)throw new Error('The backend did not confirm that the attendance photo was saved. Check Google Sheets before retrying; the clock-in may already have been recorded.');
   setMessage('terminalMessage',r.message|| (action==='clockIn'?'Clock-in recorded.':'Clock-out recorded.'),true);
   if(r.member)member=r.member;renderMember(false);await searchRecords(false)
  }catch(e){setMessage('terminalMessage',e.message,false)}
