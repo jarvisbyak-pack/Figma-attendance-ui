@@ -91,6 +91,7 @@ test('clock-in photo capture requires notice and sends a compressed photo to the
   assert.match(script, /payload=Object\.assign\(payload,photo\)/);
   assert.match(script, /photoBase64/);
   assert.match(script, /photoMimeType/);
+  assert.match(script, /!r\.photoUrl/);
   assert.match(html, /<th>Photo<\/th>/);
   assert.match(script, /link\.rel='noopener noreferrer'/);
 });
