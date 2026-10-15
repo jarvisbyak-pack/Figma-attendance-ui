@@ -5,7 +5,8 @@ Responsive attendance terminal with a shared Google Sheets backend and an Admin 
 ## Features
 
 - Variable-length numeric Membership ID lookup and registered mobile lookup.
-- Clock-in photo verification: the kiosk explains the purpose before requesting camera permission; the captured JPEG is sent with the clock-in request and linked to the attendance record when the compatible Apps Script backend is deployed. No photo preview is shown.\n- Clock-in is denied for explicitly inactive, blocked, cancelled or suspended members and duplicate active sessions. Expired members may still be recorded for attendance verification; the UI shows the expiry alert.
+- Clock-in photo verification: the kiosk explains the purpose before requesting camera permission; the captured JPEG is sent with the clock-in request and linked to the attendance record when the compatible Apps Script backend is deployed. No photo preview is shown.
+- Clock-in is denied for explicitly inactive, blocked, cancelled or suspended members and duplicate active sessions. Expired members may still be recorded for attendance verification; the UI shows the expiry alert.
 - Clock-out requires a matching active clock-in; failed clock-outs do not write a success record.
 - Attendance history in Google Sheets, filterable by date, month, time, name, membership ID and mobile, with membership expiry shown in the results.
 - Member profile attendance history.
