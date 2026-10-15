@@ -87,6 +87,7 @@ test('clock-in photo capture requires notice and sends a compressed photo to the
   assert.match(html, /Photo required for clock-in/);
   assert.match(html, /takes one photo when you clock in/i);
   assert.match(script, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(script, /if\(settled\)return/);
   assert.match(script, /canvas\.toDataURL\('image\/jpeg',0\.65\)/);
   assert.match(script, /payload=Object\.assign\(payload,photo\)/);
   assert.match(script, /photoBase64/);
