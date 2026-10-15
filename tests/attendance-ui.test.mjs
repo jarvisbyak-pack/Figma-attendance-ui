@@ -77,7 +77,6 @@ test('Members is a searchable all-fields directory and clock actions live in the
   assert.match(script, /setMessage\('connectionMessage','URL saved on this device, but connection failed:/);
   assert.match(html, /id="membersPanel"/);
   assert.match(script, /JSON\.stringify\(m\|\|\{\}\)\.toLowerCase\(\)\.includes\(query\)/);
-  assert.match(script, /JSON\\.stringify\\(m\\|\\|\\{\\}\\)\\.toLowerCase\\(\\)\\.includes\\(query\\)/);
   assert.match(script, /__computedExpiryCondition/);
   assert.match(script, /memberDirectorySearch'\)\.addEventListener\('input'/);
   assert.match(html, /\.shell\[data-current-view="members"\] \.layout\{display:block/);
