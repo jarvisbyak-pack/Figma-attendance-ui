@@ -39,7 +39,7 @@ Responsive attendance terminal with a shared Google Sheets backend and an Admin 
 ## API actions
 
 - Public kiosk actions: `ping`, `lookup`, `clockIn`, `clockOut`
-- Admin PIN required: `attendanceSearch`, `memberHistory`, `memberList`, `memberCreate`, `memberUpdate`, `memberArchive`
+- Admin PIN required: `attendanceSearch`, `memberHistory`, `memberList`
 
 ## GitHub Pages
 
